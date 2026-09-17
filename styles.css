@@ -1,480 +1,872 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#1976d2">
-  <title>Aren — Historias</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="manifest.json">
-</head>
-<body>
-
-  <!-- =====================================================
-       PANTALLA DE BIENVENIDA
-  ====================================================== -->
-  <main id="vistaBienvenida" class="vista-auth" style="display:none;">
-    <div class="auth-container">
-      <h1 class="auth-logo">Aren</h1>
-      <p class="auth-lema">Historias que conectan</p>
-
-      <div class="auth-botones">
-        <button id="btnIrLogin" class="btn-primario">Iniciar sesión</button>
-        <button id="btnIrRegistro" class="btn-secundario">Crear cuenta</button>
-      </div>
-    </div>
-  </main>
-
-  <!-- =====================================================
-       PANTALLA DE LOGIN
-  ====================================================== -->
-  <main id="vistaLogin" class="vista-auth" style="display:none;">
-    <div class="auth-container">
-      <button id="btnVolverBienvenida1" class="btn-volver-auth">← Volver</button>
-      <h1 class="auth-logo">Iniciar sesión</h1>
-
-      <form id="formLogin" class="auth-form">
-        <label>Correo electrónico
-          <input type="email" id="loginEmail" required placeholder="tu@correo.com">
-        </label>
-        <label>Contraseña
-          <input type="password" id="loginPassword" required placeholder="••••••••" minlength="6">
-        </label>
-        <button type="submit" class="btn-primario" id="btnLoginSubmit">Entrar</button>
-      </form>
-
-      <p class="auth-link">¿No tienes cuenta? <a href="#" id="linkIrRegistro">Regístrate</a></p>
-    </div>
-  </main>
-
-  <!-- =====================================================
-       PANTALLA DE REGISTRO
-  ====================================================== -->
-  <main id="vistaRegistro" class="vista-auth" style="display:none;">
-    <div class="auth-container">
-      <button id="btnVolverBienvenida2" class="btn-volver-auth">← Volver</button>
-      <h1 class="auth-logo">Crear cuenta</h1>
-
-      <form id="formRegistro" class="auth-form">
-        <label>Nombre de usuario
-          <input type="text" id="regUsername" required maxlength="30" placeholder="Tu nombre de autor">
-        </label>
-        <label>Correo electrónico
-          <input type="email" id="regEmail" required placeholder="tu@correo.com">
-        </label>
-        <label>Contraseña (mínimo 6 caracteres)
-          <input type="password" id="regPassword" required minlength="6" placeholder="••••••••">
-        </label>
-        <button type="submit" class="btn-primario" id="btnRegistroSubmit">Crear cuenta</button>
-      </form>
-
-      <p class="auth-link">¿Ya tienes cuenta? <a href="#" id="linkIrLogin">Inicia sesión</a></p>
-    </div>
-  </main>
-
-  <!-- =====================================================
-       APP PRINCIPAL
-  ====================================================== -->
-  <div id="appPrincipal" style="display:none;">
-
-    <header class="header">
-      <button id="btnMenu" class="menu-btn" aria-label="Menú">☰</button>
-      <h1 class="logo">Aren</h1>
-      <button id="btnPerfilTop" class="header-avatar" aria-label="Perfil"></button>
-    </header>
-
-    <div id="drawerOverlay" class="drawer-overlay"></div>
-    <aside id="drawer" class="drawer">
-      <div class="drawer-header">
-        <span class="drawer-logo">Aren</span>
-        <button id="btnCerrarDrawer" class="drawer-cerrar" aria-label="Cerrar menú">✕</button>
-      </div>
-      <nav class="drawer-nav">
-
-        <details class="drawer-grupo">
-          <summary>📖 Modo Lectura</summary>
-          <button data-vista="inicio">🏠 Inicio</button>
-          <button data-vista="catalogo">📚 Catálogo</button>
-          <button data-vista="publicar">✍️ Publicar</button>
-          <button data-vista="biblioteca">💾 Biblioteca</button>
-          <button data-vista="historial">📖 Historial</button>
-        </details>
-
-        <details class="drawer-grupo">
-          <summary>💬 Modo Social</summary>
-          <button data-vista="siguiendo">👥 Siguiendo</button>
-          <button data-vista="comunidades">🏘️ Comunidades</button>
-          <button data-vista="popular">🔥 Popular</button>
-          <button data-vista="crearPost">✍️ Crear post</button>
-        </details>
-
-        <div class="drawer-separador"></div>
-        <button data-vista="perfil">👤 Perfil</button>
-        <button data-vista="ajustes">⚙️ Ajustes</button>
-
-        <div class="drawer-separador"></div>
-        <div class="drawer-usuario" id="drawerUsuario"></div>
-        <button id="btnCerrarSesion" class="drawer-btn-cerrar-sesion">🚪 Cerrar sesión</button>
-
-      </nav>
-    </aside>
-
-    <main id="vistaInicio" class="vista activa" style="display:block;">
-      <div class="buscador">
-        <input type="text" id="inputBuscar" placeholder="Buscar historias, autores o etiquetas...">
-      </div>
-      <h3 class="subtitulo">Recién publicadas</h3>
-      <div id="listaHistorias" class="grid-historias"></div>
-      <p id="mensajeVacio" class="mensaje-vacio" style="display:none;">
-        Aún no hay historias. ¡Sé el primero en publicar!
-      </p>
-    </main>
-
-    <main id="vistaCatalogo" class="vista" style="display:none;">
-      <h2>Catálogo</h2>
-      <div id="filtrosGenero" class="filtros-genero"></div>
-      <div id="catalogoLista" class="grid-historias"></div>
-    </main>
-
-    <main id="vistaPublicar" class="vista" style="display:none;">
-      <h2>✍️ Publicar</h2>
-
-      <!-- Pestañas -->
-      <div class="tabs-publicar">
-        <button id="tabMisPublicadas" class="tab-btn activo">📖 Publicadas</button>
-        <button id="tabMisBorradores" class="tab-btn">📝 Borradores</button>
-        <button id="btnNuevaHistoriaTab" class="tab-btn tab-nueva">➕ Nueva</button>
-      </div>
-
-      <!-- Panel: Mis historias publicadas -->
-      <div id="panelPublicadas" class="panel-tab">
-        <div id="listaMisPublicadas" class="grid-historias"></div>
-        <p id="misPublicadasVacio" class="mensaje-vacio">Aún no has publicado ninguna historia.</p>
-      </div>
-
-      <!-- Panel: Mis borradores -->
-      <div id="panelBorradores" class="panel-tab" style="display:none;">
-        <div id="listaMisBorradores" class="grid-historias"></div>
-        <p id="misBorradoresVacio" class="mensaje-vacio">No tienes borradores.</p>
-      </div>
-
-      <!-- Panel: Formulario (nueva / editar) -->
-      <div id="panelFormulario" class="panel-tab" style="display:none;">
-        <h3 id="tituloFormulario" class="subtitulo">Nueva historia</h3>
-        <form id="formHistoria" class="formulario" novalidate>
-          <label>Portada (PNG o JPG, máx. 3 MB)
-            <input type="file" id="portada" accept="image/png, image/jpeg">
-          </label>
-          <div id="previewPortada" class="preview-portada"></div>
-          <p class="form-progress" id="infoPortada"></p>
-
-          <label>Título
-            <input type="text" id="titulo" maxlength="80" placeholder="El nombre de tu historia">
-          </label>
-
-          <label>Autor
-            <input type="text" id="autor" maxlength="40" placeholder="Tu nombre de autor">
-          </label>
-
-          <label>Dedicatoria (opcional)
-            <input type="text" id="dedicatoria" maxlength="120" placeholder="Para mi mejor amiga...">
-          </label>
-
-          <label>Sinopsis
-            <textarea id="sinopsis" maxlength="400" rows="3" placeholder="De qué trata tu historia..."></textarea>
-          </label>
-
-          <div class="fila-doble">
-            <label>Género
-              <select id="genero"></select>
-            </label>
-            <label>Subgénero
-              <select id="subgenero"></select>
-            </label>
-          </div>
-
-          <label>Estado
-            <select id="estado">
-              <option>En curso</option>
-              <option>Completa</option>
-              <option>En pausa</option>
-              <option>Abandonada</option>
-            </select>
-          </label>
-
-          <label>Etiquetas (separadas por coma, máximo 10)
-            <input type="text" id="etiquetas" placeholder="amor, drama, magia">
-          </label>
-          <div id="etiquetasPreview" class="etiquetas-preview"></div>
-
-          <label class="check-advertencias">Advertencias de contenido</label>
-          <div class="advertencias">
-            <label><input type="checkbox" id="adv18" value="+18"> +18</label>
-            <label><input type="checkbox" id="advViolencia" value="Violencia"> Violencia</label>
-            <label><input type="checkbox" id="advSensible" value="Temas sensibles"> Temas sensibles</label>
-            <label><input type="checkbox" id="advLenguaje" value="Lenguaje fuerte"> Lenguaje fuerte</label>
-          </div>
-
-          <label class="switch-label" style="margin-top:14px;">
-            <input type="checkbox" id="chkBorrador">
-            Guardar como borrador (no se publicará todavía)
-          </label>
-
-          <div id="bloqueProgramar">
-            <label>Programar publicación (opcional)
-              <input type="datetime-local" id="fechaPublicacion">
-            </label>
-            <p class="form-progress">Si dejas la fecha vacía, se publicará al guardar.</p>
-          </div>
-
-          <button type="submit" class="btn-primario" id="btnGuardarHistoria">Publicar historia</button>
-          <button type="button" class="btn-secundario" id="btnCancelarFormulario">Cancelar</button>
-        </form>
-      </div>
-    </main>
-
-    <main id="vistaBiblioteca" class="vista" style="display:none;">
-      <h2>Mi Biblioteca</h2>
-      <div id="listaBiblioteca" class="grid-historias"></div>
-      <p id="bibliotecaVacia" class="mensaje-vacio">No has guardado historias aún.</p>
-    </main>
-
-    <main id="vistaHistorial" class="vista" style="display:none;">
-      <h2>Historial de lectura</h2>
-      <div id="listaHistorial" class="grid-historias"></div>
-      <p id="historialVacio" class="mensaje-vacio">Aún no has leído nada.</p>
-    </main>
-
-    <main id="vistaSiguiendo" class="vista" style="display:none;">
-      <h2>👥 Autores que sigo</h2>
-      <div id="listaAutores" class="lista-autores"></div>
-      <p id="siguiendoVacio" class="mensaje-vacio">No sigues a ningún autor aún.</p>
-    </main>
-
-    <main id="vistaComunidades" class="vista" style="display:none;">
-      <h2>Comunidades</h2>
-      <div class="proximamente">
-        <div class="proximamente-icono">🏘️</div>
-        <h3>Próximamente</h3>
-        <p>Estamos construyendo las comunidades estilo Reddit. Aquí podrás crear y unirte a espacios sobre tus temas favoritos.</p>
-      </div>
-    </main>
-
-    <main id="vistaPopular" class="vista" style="display:none;">
-      <h2>Popular</h2>
-      <div class="proximamente">
-        <div class="proximamente-icono">🔥</div>
-        <h3>Próximamente</h3>
-        <p>Aquí verás los posts más votados de todas las comunidades.</p>
-      </div>
-    </main>
-
-    <main id="vistaCrearPost" class="vista" style="display:none;">
-      <h2>Crear post</h2>
-      <div class="proximamente">
-        <div class="proximamente-icono">✍️</div>
-        <h3>Próximamente</h3>
-        <p>Podrás publicar textos, enlaces e imágenes en las comunidades.</p>
-      </div>
-    </main>
-
-    <main id="vistaLector" class="vista" style="display:none;">
-      <button id="btnVolver" class="btn-secundario">← Volver</button>
-
-      <div id="detalleHistoria">
-        <img id="detallePortada" class="detalle-portada" style="display:none;">
-        <h2 id="lectorTitulo"></h2>
-        <p id="lectorAutor" class="autor-linea"></p>
-        <p id="lectorMeta" class="meta"></p>
-        <div id="lectorAdvertencias" class="advertencias-mostradas"></div>
-        <p id="lectorSinopsis" class="sinopsis"></p>
-
-        <!-- Acciones del lector (usuario normal) -->
-        <div class="acciones-historia">
-          <button id="btnGuardar" class="btn-secundario">💾 Guardar</button>
-          <button id="btnSeguirAutor" class="btn-secundario">👥 Seguir autor</button>
-        </div>
-
-        <!-- Acciones del autor (solo visibles si es tu historia) -->
-        <div class="acciones-historia" id="accionesAutor" style="display:none;">
-          <button id="btnEditarHistoria" class="btn-secundario">✏️ Editar</button>
-          <button id="btnPublicarAhora" class="btn-secundario">🚀 Publicar ahora</button>
-          <button id="btnExportarPDF" class="btn-secundario">📄 Exportar PDF</button>
-          <button id="btnEliminarHistoria" class="btn-secundario btn-peligro">🗑️ Eliminar</button>
-        </div>
-
-        <div class="valoracion">
-          <span>Valoración:</span>
-          <div id="estrellasValoracion" class="estrellas"></div>
-          <span id="promedioValoracion" class="promedio"></span>
-        </div>
-
-        <h3 class="subtitulo">Capítulos</h3>
-        <ul id="listaCapitulos" class="lista-capitulos"></ul>
-        <button id="btnNuevoCapitulo" class="btn-primario" style="display:none;">➕ Añadir capítulo</button>
-      </div>
-
-      <div id="vistaLecturaCapitulo" style="display:none;">
-        <button id="btnVolverCapitulos" class="btn-secundario">← Capítulos</button>
-        <h2 id="tituloCapitulo"></h2>
-        <p id="metaCapitulo" class="meta"></p>
-
-        <div class="lectura-controles">
-          <button id="btnLecturaMenos" class="btn-secundario">A−</button>
-          <button id="btnLecturaMas" class="btn-secundario">A+</button>
-          <button id="btnLecturaSerif" class="btn-secundario">Serif</button>
-          <button id="btnLecturaSans" class="btn-secundario">Sans</button>
-          <button id="btnLecturaAncho" class="btn-secundario">Ancho</button>
-          <button id="btnSepia" class="btn-secundario">📜 Sepia</button>
-          <button id="btnPantallaCompleta" class="btn-secundario">⛶</button>
-          <button id="btnTTS" class="btn-secundario">🔊</button>
-        </div>
-
-        <div id="contenidoCapitulo" class="contenido-lectura"></div>
-        <div id="scrollSentinel"></div>
-
-        <div class="nav-capitulos">
-          <button id="btnCapAnterior" class="btn-secundario">← Anterior</button>
-          <button id="btnCapSiguiente" class="btn-secundario">Siguiente →</button>
-        </div>
-
-        <h3 class="subtitulo">Comentarios</h3>
-        <div id="listaComentarios" class="lista-comentarios"></div>
-        <form id="formComentario" class="form-comentario">
-          <input type="text" id="inputComentario" placeholder="Escribe un comentario..." required>
-          <button type="submit" class="btn-primario">Enviar</button>
-        </form>
-      </div>
-    </main>
-
-    <main id="vistaEditorCapitulo" class="vista" style="display:none;">
-      <h2 id="tituloEditorCapitulo">Nuevo capítulo</h2>
-      <form id="formCapitulo" class="formulario" novalidate>
-        <label>Título del capítulo
-          <input type="text" id="tituloCapituloInput" maxlength="100">
-        </label>
-
-        <div class="barra-editor">
-          <button type="button" data-cmd="bold"><b>B</b></button>
-          <button type="button" data-cmd="italic"><i>I</i></button>
-          <button type="button" data-cmd="underline"><u>U</u></button>
-          <button type="button" data-cmd="strikeThrough"><s>S</s></button>
-          <button type="button" data-cmd="formatBlock" data-value="h2">H2</button>
-          <button type="button" data-cmd="formatBlock" data-value="h3">H3</button>
-          <button type="button" data-cmd="formatBlock" data-value="p">¶</button>
-          <button type="button" data-cmd="formatBlock" data-value="blockquote">❝</button>
-          <button type="button" data-cmd="insertUnorderedList">•</button>
-          <button type="button" data-cmd="insertOrderedList">1.</button>
-          <button type="button" data-cmd="justifyLeft">⬅</button>
-          <button type="button" data-cmd="justifyCenter">↔</button>
-          <button type="button" data-cmd="justifyRight">➡</button>
-          <button type="button" data-cmd="insertHorizontalRule">—</button>
-          <button type="button" id="btnInsertarImagen">🖼️</button>
-          <input type="file" id="inputImagenCap" accept="image/png, image/jpeg" style="display:none;">
-        </div>
-
-        <div id="editorContenido" class="editor-contenido" contenteditable="true"></div>
-
-        <label>Nota del autor al final del capítulo (opcional)
-          <textarea id="notaAutor" maxlength="500" rows="2" placeholder="Gracias por leer..."></textarea>
-        </label>
-
-        <div class="editor-info">
-          <span class="contador" id="contadorPalabras">0 palabras · 0 min</span>
-          <span class="contador" id="autosaveEstado"></span>
-        </div>
-
-        <button type="submit" class="btn-primario">Guardar capítulo</button>
-        <button type="button" class="btn-secundario" id="btnCancelarCapitulo">Cancelar</button>
-      </form>
-    </main>
-
-    <main id="vistaPerfil" class="vista" style="display:none;">
-      <h2>Mi perfil</h2>
-      <div class="perfil-card">
-        <div id="perfilAvatar" class="perfil-avatar">👤</div>
-        <form id="formPerfil" class="formulario" novalidate>
-
-          <label for="perfilFoto" class="btn-subir-foto">
-            <span class="btn-subir-icono">+</span>
-            <span class="btn-subir-texto">AÑADIR</span>
-            <span class="btn-subir-limite">Máximo (3 MB)</span>
-          </label>
-          <input type="file" id="perfilFoto" accept="image/png, image/jpeg" class="input-oculto">
-
-          <label>Emoji alternativo (si no hay foto)
-            <input type="text" id="perfilEmoji" maxlength="4" placeholder="👤">
-          </label>
-          <label>Nombre de usuario
-            <input type="text" id="perfilNombre" maxlength="30" placeholder="Anónimo">
-          </label>
-          <label>Biografía
-            <textarea id="perfilBio" maxlength="200" rows="3" placeholder="Cuéntanos sobre ti..."></textarea>
-          </label>
-          <button type="button" class="btn-secundario" id="btnQuitarFoto" style="display:none;">Quitar foto</button>
-          <button type="submit" class="btn-primario">Guardar perfil</button>
-        </form>
-      </div>
-      <h3 class="subtitulo">Mis historias</h3>
-      <div id="misHistorias" class="grid-historias"></div>
-    </main>
-
-    <main id="vistaAjustes" class="vista" style="display:none;">
-      <h2>Ajustes</h2>
-
-      <h3 class="subtitulo">Tema</h3>
-      <div class="fila-ajustes">
-        <button id="btnModoClaro" class="btn-secundario">☀️ Claro</button>
-        <button id="btnModoOscuro" class="btn-secundario">🌙 Oscuro</button>
-        <button id="btnModoSepia" class="btn-secundario">📜 Sepia</button>
-      </div>
-
-      <h3 class="subtitulo">Color de acento</h3>
-      <div id="paletaColores" class="paleta-colores"></div>
-
-      <h3 class="subtitulo">Modo lectura</h3>
-      <div class="opcion-lectura">
-        <label>Tamaño de letra: <span id="lblTamano">18px</span></label>
-        <input type="range" id="sliderTamano" min="14" max="26" step="1">
-      </div>
-      <div class="opcion-lectura">
-        <label>Interlineado: <span id="lblInter">1.7</span></label>
-        <input type="range" id="sliderInter" min="14" max="22" step="1">
-      </div>
-      <div class="opcion-lectura">
-        <label>Ancho de columna: <span id="lblAncho">700px</span></label>
-        <input type="range" id="sliderAncho" min="480" max="900" step="20">
-      </div>
-      <div class="fila-ajustes">
-        <button id="btnFuenteSerif" class="btn-secundario">Serif</button>
-        <button id="btnFuenteSans" class="btn-secundario">Sans</button>
-        <button id="btnResetLectura" class="btn-secundario">Restablecer</button>
-      </div>
-
-      <h3 class="subtitulo">Opciones de lectura</h3>
-      <div class="fila-ajustes">
-        <label class="switch-label">
-          <input type="checkbox" id="toggleScrollInfinito">
-          Scroll infinito entre capítulos
-        </label>
-      </div>
-
-      <h3 class="subtitulo">Avanzado</h3>
-      <div class="fila-ajustes">
-        <button id="btnDiagnostico" class="btn-secundario" style="font-size:.85rem;opacity:.75;">🔧 Diagnóstico</button>
-      </div>
-    </main>
-
-    <button id="btnSalirPantallaCompleta" class="salir-pantalla-completa" style="display:none;">✕</button>
-
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- BOTÓN FLOTANTE ✍️ (fuera de vistas para que sea global) -->
-    <button id="btnPublicarFlotante" class="btn-flotante" title="Publicar historia" style="display:none;">✍️</button>
-
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --color-primario: #1976d2;
+  --color-primario-oscuro: #0d47a1;
+}
+
+body {
+  --color-fondo: #fdfdfb;
+  --color-texto: #222;
+  --color-tarjeta: #ffffff;
+  --color-borde: #e3e3e3;
+  --color-meta: #7a7a7a;
+
+  --lectura-tamano: 18px;
+  --lectura-familia: Georgia, 'Times New Roman', serif;
+  --lectura-interlineado: 1.7;
+  --lectura-ancho: 700px;
+
+  font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  padding-bottom: 40px;
+  transition: background .25s, color .25s;
+  min-height: 100vh;
+}
+
+/* ============ ACENTOS ============ */
+body.color-rojo    { --color-primario: #e53935; --color-primario-oscuro: #b71c1c; }
+body.color-verde   { --color-primario: #43a047; --color-primario-oscuro: #1b5e20; }
+body.color-vino    { --color-primario: #8e2434; --color-primario-oscuro: #5c1220; }
+body.color-azul    { --color-primario: #1976d2; --color-primario-oscuro: #0d47a1; }
+body.color-morado  { --color-primario: #9c27b0; --color-primario-oscuro: #6a1b9a; }
+body.color-purpura { --color-primario: #6a1b9a; --color-primario-oscuro: #4a148c; }
+body.color-dorado  { --color-primario: #c9a227; --color-primario-oscuro: #8d6e14; }
+body.color-amarillo{ --color-primario: #fbc02d; --color-primario-oscuro: #c49000; }
+body.color-gris    { --color-primario: #607d8b; --color-primario-oscuro: #37474f; }
+body.color-naranja { --color-primario: #ff6b35; --color-primario-oscuro: #e85a28; }
+
+body.modo-oscuro {
+  --color-fondo: #121212;
+  --color-texto: #eaeaea;
+  --color-tarjeta: #1e1e1e;
+  --color-borde: #333;
+  --color-meta: #aaa;
+}
+
+body.sepia {
+  --color-fondo: #f4ecd8 !important;
+  --color-texto: #4a3f2f !important;
+  --color-tarjeta: #fdf6e3 !important;
+  --color-borde: #d9cbb0 !important;
+  --color-meta: #8b7d63 !important;
+  --color-primario: #b8860b !important;
+  --color-primario-oscuro: #8b6508 !important;
+}
+body.sepia .contenido-lectura { color: #4a3f2f; }
+body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
+
+/* ============ PANTALLAS DE AUTENTICACIÓN ============ */
+.vista-auth {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+}
+
+.auth-container {
+  background: #ffffff;
+  color: #222;
+  border-radius: 20px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.25);
+  position: relative;
+  animation: fadeInAuth .35s ease;
+}
+
+@keyframes fadeInAuth {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-logo {
+  font-size: 2.5rem; font-weight: 800;
+  text-align: center; letter-spacing: 2px;
+  background: linear-gradient(135deg, #1976d2, #0d47a1);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+  margin-bottom: 8px;
+}
+
+.auth-lema {
+  text-align: center; color: #888;
+  font-size: .95rem; margin-bottom: 32px;
+  font-style: italic;
+}
+
+.auth-form {
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.auth-form label {
+  display: flex; flex-direction: column;
+  font-size: .9rem; font-weight: 600; gap: 6px;
+  color: #222;
+}
+
+.auth-form input {
+  padding: 12px 14px; border-radius: 10px;
+  border: 1px solid #ddd; font-size: 1rem;
+  font-family: inherit; outline: none;
+  background: #fafafa; color: #222;
+  transition: border-color .2s;
+}
+
+.auth-form input:focus {
+  border-color: #1976d2;
+  background: #fff;
+}
+
+.auth-form .btn-primario { margin-top: 12px; width: 100%; }
+
+.auth-botones {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-top: 24px;
+}
+
+.auth-botones .btn-primario,
+.auth-botones .btn-secundario {
+  width: 100%; margin: 0; padding: 14px; font-size: 1rem;
+}
+
+.auth-botones .btn-secundario {
+  background: transparent;
+  border: 2px solid #1976d2;
+  color: #1976d2;
+  font-weight: 700;
+}
+
+.auth-link {
+  text-align: center; font-size: .9rem;
+  color: #888; margin-top: 20px;
+}
+
+.auth-link a {
+  color: #1976d2; font-weight: 700; text-decoration: none;
+}
+
+.auth-link a:hover { text-decoration: underline; }
+
+.btn-volver-auth {
+  background: none; border: none; color: #1976d2;
+  font-size: .95rem; font-weight: 600; cursor: pointer;
+  padding: 6px 0; margin-bottom: 12px; text-align: left;
+}
+
+/* ============ CABECERA ============ */
+.header {
+  background: linear-gradient(135deg, var(--color-primario), var(--color-primario-oscuro));
+  color: white;
+  padding: 12px 16px;
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  gap: 10px;
+}
+.logo { font-size: 1.4rem; font-weight: 800; letter-spacing: 1px; flex: 1; text-align: center; }
+.menu-btn {
+  background: rgba(255,255,255,.2); border: none; color: white;
+  padding: 8px 12px; border-radius: 10px; font-size: 1.2rem; cursor: pointer;
+}
+.header-avatar {
+  width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+  background: rgba(255,255,255,.25); border: 2px solid rgba(255,255,255,.6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; color: white; cursor: pointer; padding: 0;
+  flex-shrink: 0;
+}
+.header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ============ DRAWER ============ */
+.drawer-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 30;
+}
+.drawer-overlay.abierto { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; top: 0; left: 0; height: 100%;
+  width: 280px; max-width: 85vw;
+  background: var(--color-tarjeta); color: var(--color-texto);
+  transform: translateX(-100%); transition: transform .28s ease;
+  z-index: 31; padding: 20px 0; box-shadow: 2px 0 12px rgba(0,0,0,.2);
+  display: flex; flex-direction: column;
+}
+.drawer.abierto { transform: translateX(0); }
+.drawer-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 20px 20px; border-bottom: 1px solid var(--color-borde);
+}
+.drawer-logo {
+  font-size: 1.6rem; font-weight: 800;
+  background: linear-gradient(135deg, var(--color-primario), var(--color-primario-oscuro));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.drawer-cerrar {
+  background: none; border: none; color: var(--color-texto);
+  font-size: 1.2rem; cursor: pointer;
+}
+.drawer-nav { display: flex; flex-direction: column; padding: 10px 0; overflow-y: auto; flex: 1; }
+.drawer-nav button {
+  background: none; border: none; text-align: left;
+  padding: 12px 22px; font-size: 1rem; color: var(--color-texto);
+  cursor: pointer; transition: background .15s;
+}
+.drawer-nav button:active, .drawer-nav button:hover {
+  background: rgba(25,118,210,.12); color: var(--color-primario);
+}
+
+/* ============ MENÚ COLAPSABLE ============ */
+.drawer-grupo {
+  border: none;
+}
+.drawer-grupo > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 22px 6px;
+  font-size: .72rem; font-weight: 700;
+  color: var(--color-meta);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  transition: color .15s;
+}
+.drawer-grupo > summary::-webkit-details-marker { display: none; }
+.drawer-grupo > summary::after {
+  content: '▼';
+  font-size: .7rem;
+  color: var(--color-meta);
+  transition: transform .2s;
+}
+.drawer-grupo[open] > summary::after {
+  transform: rotate(180deg);
+}
+.drawer-grupo > summary:active {
+  color: var(--color-primario);
+}
+.drawer-grupo > button {
+  background: none; border: none; text-align: left;
+  padding: 12px 32px; font-size: .95rem; color: var(--color-texto);
+  cursor: pointer; transition: background .15s; width: 100%;
+}
+.drawer-grupo > button:active,
+.drawer-grupo > button:hover {
+  background: rgba(25,118,210,.12); color: var(--color-primario);
+}
+
+.drawer-seccion {
+  padding: 14px 22px 6px;
+  font-size: .72rem; font-weight: 700;
+  color: var(--color-meta);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.drawer-separador {
+  height: 1px;
+  background: var(--color-borde);
+  margin: 10px 16px;
+}
+.drawer-usuario {
+  padding: 12px 22px;
+  font-size: .85rem;
+  color: var(--color-meta);
+  border-top: 1px solid var(--color-borde);
+  margin-top: 10px;
+  word-break: break-all;
+}
+.drawer-usuario .nombre-drawer {
+  font-weight: 700;
+  color: var(--color-texto);
+  font-size: .95rem;
+  display: block;
+  margin-bottom: 4px;
+}
+.drawer-btn-cerrar-sesion {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 14px 22px;
+  font-size: 1rem;
+  color: #d33;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background .15s;
+}
+.drawer-btn-cerrar-sesion:hover,
+.drawer-btn-cerrar-sesion:active {
+  background: rgba(221,51,51,.12);
+}
+
+/* ============ VISTAS ============ */
+.vista { padding: 16px; max-width: 900px; margin: 0 auto; }
+.vista h2 { margin-bottom: 14px; }
+.subtitulo { margin: 20px 0 10px; font-size: 1.05rem; }
+
+/* ============ PESTAÑAS PUBLICAR ============ */
+.tabs-publicar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.tabs-publicar::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  background: var(--color-tarjeta);
+  border: 1px solid var(--color-borde);
+  color: var(--color-texto);
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: .9rem;
+  cursor: pointer;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+
+.tab-btn.activo {
+  background: var(--color-primario);
+  color: white;
+  border-color: var(--color-primario);
+}
+
+.tab-btn.tab-nueva {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-color: #a5d6a7;
+}
+
+.tab-btn.tab-nueva:active { background: #c8e6c9; }
+
+.panel-tab { animation: fadeInAuth .2s ease; }
+
+/* ============ BUSCADOR ============ */
+.buscador { margin-bottom: 16px; }
+.buscador input {
+  width: 100%; padding: 12px 16px; border-radius: 24px;
+  border: 1px solid var(--color-borde); font-size: 1rem; outline: none;
+  background: var(--color-tarjeta); color: var(--color-texto);
+}
+.buscador input:focus { border-color: var(--color-primario); }
+
+/* ============ GRID Y TARJETAS ============ */
+.grid-historias {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+}
+.tarjeta {
+  background: var(--color-tarjeta); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,.08); cursor: pointer;
+  transition: transform .15s; border: 1px solid var(--color-borde);
+}
+.tarjeta:active { transform: scale(.97); }
+.tarjeta-portada {
+  height: 130px; overflow: hidden;
+  background: linear-gradient(135deg, var(--color-primario), var(--color-primario-oscuro));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem; color: white;
+}
+.tarjeta-portada img { width: 100%; height: 100%; object-fit: cover; }
+.tarjeta-info { padding: 10px; }
+.tarjeta-info h3 { font-size: .95rem; margin-bottom: 4px; }
+.tarjeta-info p { font-size: .75rem; color: var(--color-meta); }
+.tarjeta-info .autor-mini { color: var(--color-primario); font-weight: 600; }
+.etiqueta {
+  display: inline-block; background: var(--color-primario);
+  color: white; padding: 2px 8px; border-radius: 10px;
+  font-size: .68rem; margin: 4px 4px 0 0; opacity: .9;
+}
+.badge-estado {
+  display: inline-block; font-size: .68rem; padding: 2px 8px;
+  border-radius: 10px; background: #e8f5e9; color: #2e7d32; margin-top: 4px;
+}
+body.modo-oscuro .badge-estado { background: #1b3a1d; color: #81c784; }
+.estrellitas { font-size: .8rem; color: #f5a623; margin-top: 2px; }
+
+.badge-borrador {
+  display: inline-block; font-size: .68rem; padding: 2px 8px;
+  border-radius: 10px; background: #fff3cd; color: #856404;
+  margin-top: 4px; font-weight: 700;
+}
+.badge-programada {
+  display: inline-block; font-size: .68rem; padding: 2px 8px;
+  border-radius: 10px; background: #cfe2ff; color: #084298;
+  margin-top: 4px; font-weight: 700;
+}
+body.modo-oscuro .badge-borrador { background: #4a3a10; color: #ffd966; }
+body.modo-oscuro .badge-programada { background: #1c2a4a; color: #8ab4f8; }
+
+/* ============ FILTROS ============ */
+.filtros-genero {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px;
+  margin-bottom: 14px; scrollbar-width: none;
+}
+.filtros-genero::-webkit-scrollbar { display: none; }
+.filtros-genero button {
+  background: var(--color-tarjeta); border: 1px solid var(--color-borde);
+  color: var(--color-texto); padding: 8px 14px; border-radius: 20px;
+  font-size: .85rem; white-space: nowrap; cursor: pointer;
+}
+.filtros-genero button.activo {
+  background: var(--color-primario); color: white; border-color: var(--color-primario);
+}
+
+/* ============ FORMULARIO ============ */
+.formulario { display: flex; flex-direction: column; gap: 14px; }
+.formulario label {
+  display: flex; flex-direction: column;
+  font-size: .9rem; font-weight: 600; gap: 6px;
+}
+.formulario input, .formulario textarea, .formulario select {
+  padding: 11px; border-radius: 8px;
+  border: 1px solid var(--color-borde);
+  font-size: 1rem; font-family: inherit; outline: none;
+  background: var(--color-tarjeta); color: var(--color-texto);
+}
+.formulario input:focus, .formulario textarea:focus { border-color: var(--color-primario); }
+.fila-doble { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.preview-portada img { max-width: 140px; border-radius: 10px; margin-top: 6px; }
+.etiquetas-preview { display: flex; flex-wrap: wrap; gap: 6px; }
+.etiquetas-preview .etiqueta { margin: 0; }
+.form-progress { font-size: .78rem; color: var(--color-meta); text-align: right; }
+
+/* ============ ADVERTENCIAS ============ */
+.check-advertencias { font-weight: 600; }
+.advertencias {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  padding: 10px; background: var(--color-tarjeta);
+  border: 1px solid var(--color-borde); border-radius: 10px;
+}
+.advertencias label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .9rem; cursor: pointer;
+  flex-direction: row !important;
+}
+.advertencias input[type="checkbox"] { width: 18px; height: 18px; }
+.advertencias-mostradas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.advertencias-mostradas .aviso {
+  display: inline-block;
+  background: #ffe0e0; color: #d33;
+  padding: 4px 10px; border-radius: 12px;
+  font-size: .75rem; font-weight: 700;
+}
+body.modo-oscuro .advertencias-mostradas .aviso { background: #4a1a1a; color: #ff8080; }
+
+/* ============ BOTONES ============ */
+.btn-primario {
+  background: var(--color-primario); color: white; border: none;
+  padding: 12px; border-radius: 24px; font-size: 1rem;
+  font-weight: bold; cursor: pointer; margin-top: 10px;
+}
+.btn-primario:active { background: var(--color-primario-oscuro); }
+.btn-secundario {
+  background: var(--color-tarjeta); border: 1px solid var(--color-borde);
+  color: var(--color-primario); padding: 10px 14px;
+  border-radius: 20px; font-size: .9rem; cursor: pointer;
+  margin-right: 6px; margin-bottom: 6px;
+}
+.btn-peligro { color: #d33; }
+
+/* ============ MENSAJES ============ */
+.mensaje-vacio {
+  text-align: center; color: var(--color-meta);
+  padding: 40px 20px; font-size: .9rem;
+}
+.meta { color: var(--color-meta); font-size: .85rem; margin-bottom: 10px; }
+.sinopsis { margin: 10px 0 16px; line-height: 1.5; }
+.autor-linea { color: var(--color-primario); font-weight: 600; margin-bottom: 6px; }
+
+/* ============ PROXIMAMENTE ============ */
+.proximamente {
+  text-align: center; padding: 60px 20px;
+  background: var(--color-tarjeta); border-radius: 16px;
+  border: 2px dashed var(--color-borde);
+}
+.proximamente-icono { font-size: 3rem; margin-bottom: 16px; }
+.proximamente h3 { font-size: 1.3rem; margin-bottom: 10px; color: var(--color-primario); }
+.proximamente p { color: var(--color-meta); line-height: 1.6; max-width: 400px; margin: 0 auto; }
+
+/* ============ LECTOR ============ */
+.contenido-lectura {
+  font-size: var(--lectura-tamano);
+  font-family: var(--lectura-familia);
+  line-height: var(--lectura-interlineado);
+  max-width: var(--lectura-ancho);
+  margin: 20px auto;
+  word-wrap: break-word;
+  text-align: justify;
+  hyphens: auto;
+}
+.contenido-lectura h2, .contenido-lectura h3 { margin: 16px 0 10px; }
+.contenido-lectura p { margin-bottom: 1em; }
+.contenido-lectura ul, .contenido-lectura ol { margin: 10px 0 10px 26px; }
+.contenido-lectura blockquote {
+  border-left: 4px solid var(--color-primario);
+  padding-left: 14px; margin: 14px 0; font-style: italic;
+  color: var(--color-meta);
+}
+.contenido-lectura hr { border: none; border-top: 1px solid var(--color-borde); margin: 20px 0; }
+.contenido-lectura img {
+  max-width: 100%; height: auto; border-radius: 10px;
+  margin: 16px auto; display: block;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+
+/* ============ ANIMACIÓN DE CAPÍTULOS ============ */
+@keyframes fadeCapitulo {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-capitulo {
+  animation: fadeCapitulo .4s ease-out;
+}
+
+.lectura-controles {
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0;
+  padding: 8px; background: var(--color-tarjeta);
+  border-radius: 12px; border: 1px solid var(--color-borde);
+}
+.lectura-controles .btn-secundario { margin: 0; padding: 8px 12px; font-size: .85rem; }
+.lectura-controles .btn-secundario.tts-activo {
+  background: var(--color-primario) !important;
+  color: white !important;
+  border-color: var(--color-primario) !important;
+}
+
+.detalle-portada {
+  width: 100%; max-width: 220px; border-radius: 12px; margin-bottom: 14px;
+  display: block;
+}
+.acciones-historia { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+
+/* ============ DEDICATORIA ============ */
+.dedicatoria {
+  font-style: italic; text-align: center;
+  color: var(--color-meta);
+  padding: 14px;
+  border-top: 1px solid var(--color-borde);
+  border-bottom: 1px solid var(--color-borde);
+  margin: 14px 0;
+  font-size: 1.05rem;
+}
+
+/* ============ NOTA DEL AUTOR ============ */
+.nota-autor {
+  margin: 30px 0 20px;
+  padding: 14px 16px;
+  background: var(--color-tarjeta);
+  border-left: 4px solid var(--color-primario);
+  border-radius: 8px;
+  font-size: .95rem;
+  line-height: 1.6;
+}
+.nota-autor-titulo {
+  font-weight: 700; color: var(--color-primario);
+  margin-bottom: 6px; font-size: .85rem;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+
+/* ============ PANTALLA COMPLETA ============ */
+body.modo-pantalla-completa .header,
+body.modo-pantalla-completa .drawer,
+body.modo-pantalla-completa .drawer-overlay,
+body.modo-pantalla-completa #btnVolverCapitulos,
+body.modo-pantalla-completa .lectura-controles,
+body.modo-pantalla-completa .nav-capitulos,
+body.modo-pantalla-completa #listaComentarios,
+body.modo-pantalla-completa #formComentario,
+body.modo-pantalla-completa .subtitulo { display: none !important; }
+body.modo-pantalla-completa .vista { padding: 60px 20px 40px; max-width: 100%; }
+body.modo-pantalla-completa .contenido-lectura { margin: 20px auto; }
+
+.salir-pantalla-completa {
+  position: fixed; top: 12px; right: 12px; z-index: 1000;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(0,0,0,.5); color: white; border: none;
+  font-size: 1.2rem; cursor: pointer;
+  opacity: .35; transition: opacity .25s, background .25s;
+  display: flex; align-items: center; justify-content: center;
+}
+.salir-pantalla-completa:hover,
+.salir-pantalla-completa:active { opacity: 1; background: rgba(0,0,0,.8); }
+
+/* ============ VALORACIÓN ============ */
+.valoracion { display: flex; align-items: center; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+.estrellas { display: flex; gap: 4px; }
+.estrella {
+  font-size: 1.7rem; cursor: pointer; color: #d0d0d0;
+  background: none; border: none; padding: 0;
+  line-height: 1;
+  transition: transform .12s, color .12s;
+}
+.estrella:hover,
+.estrella:active { transform: scale(1.15); }
+.estrella.activa { color: #f5a623; }
+.promedio { font-size: .85rem; color: var(--color-meta); }
+
+/* ============ CAPÍTULOS ============ */
+.lista-capitulos { list-style: none; margin-bottom: 14px; }
+.lista-capitulos li {
+  padding: 12px; border-radius: 8px;
+  background: var(--color-tarjeta); margin-bottom: 6px; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  border: 1px solid var(--color-borde);
+}
+.lista-capitulos .cap-num { color: var(--color-meta); font-size: .8rem; }
+.lista-capitulos .cap-acciones { display: flex; align-items: center; gap: 2px; }
+.lista-capitulos .cap-acciones button {
+  background: none; border: none; cursor: pointer; font-size: 1rem; padding: 2px 6px;
+}
+.btn-mover {
+  background: none; border: 1px solid var(--color-borde) !important;
+  border-radius: 6px; cursor: pointer;
+  font-size: .85rem !important; padding: 2px 6px !important;
+  color: var(--color-meta); margin: 0 2px;
+}
+.btn-mover:disabled { opacity: .3; cursor: not-allowed; }
+.nav-capitulos { display: flex; justify-content: space-between; margin: 20px 0; }
+
+/* ============ COMENTARIOS ============ */
+.lista-comentarios { margin-bottom: 14px; }
+.comentario {
+  background: var(--color-tarjeta); border-radius: 10px; padding: 10px 12px;
+  margin-bottom: 8px; border: 1px solid var(--color-borde);
+}
+.comentario .autor { font-weight: bold; font-size: .85rem; color: var(--color-primario); }
+.comentario .fecha { font-size: .7rem; color: var(--color-meta); margin-left: 6px; }
+.comentario p { font-size: .9rem; margin-top: 4px; }
+.form-comentario { display: flex; gap: 8px; align-items: center; }
+.form-comentario input {
+  flex: 1; padding: 10px 14px; border-radius: 22px;
+  border: 1px solid var(--color-borde);
+  background: var(--color-tarjeta); color: var(--color-texto); outline: none;
+}
+.form-comentario button { margin: 0; padding: 10px 18px; }
+
+/* ============ EDITOR ============ */
+.barra-editor {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 8px; background: var(--color-tarjeta);
+  border-radius: 10px; border: 1px solid var(--color-borde);
+  position: sticky; top: 60px; z-index: 5;
+}
+.barra-editor button {
+  background: none; border: 1px solid var(--color-borde);
+  padding: 6px 10px; border-radius: 8px; cursor: pointer;
+  font-size: .9rem; color: var(--color-texto); min-width: 34px;
+}
+.barra-editor button:active { background: var(--color-primario); color: white; }
+.editor-contenido {
+  min-height: 320px; padding: 16px;
+  border: 1px solid var(--color-borde); border-radius: 10px;
+  background: var(--color-tarjeta); color: var(--color-texto);
+  font-size: 1.05rem; line-height: 1.7; outline: none;
+  font-family: Georgia, serif;
+}
+.editor-contenido:focus { border-color: var(--color-primario); }
+.editor-contenido blockquote {
+  border-left: 4px solid var(--color-primario);
+  padding-left: 14px; margin: 14px 0; font-style: italic;
+}
+.editor-contenido img { max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0; display: block; }
+.editor-info { display: flex; justify-content: space-between; font-size: .85rem; color: var(--color-meta); }
+.contador { font-size: .85rem; color: var(--color-meta); }
+
+/* ============ PERFIL ============ */
+.perfil-card {
+  display: flex; gap: 16px; align-items: flex-start;
+  background: var(--color-tarjeta); padding: 16px; border-radius: 12px;
+  border: 1px solid var(--color-borde); flex-wrap: wrap;
+}
+.perfil-avatar {
+  width: 84px; height: 84px; border-radius: 50%; overflow: hidden;
+  background: linear-gradient(135deg, var(--color-primario), var(--color-primario-oscuro));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem; color: white;
+  flex-shrink: 0;
+}
+.perfil-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.perfil-card form { flex: 1; min-width: 220px; }
+
+/* ============ BOTÓN SUBIR FOTO ============ */
+.btn-subir-foto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 20px;
+  border: 2px dashed var(--color-borde);
+  border-radius: 12px;
+  background: var(--color-tarjeta);
+  color: var(--color-texto);
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  text-align: center;
+  width: 100%;
+  max-width: 260px;
+}
+.btn-subir-foto:hover,
+.btn-subir-foto:active {
+  border-color: var(--color-primario);
+  background: rgba(25,118,210,.05);
+}
+.btn-subir-foto .btn-subir-icono {
+  font-size: 1.5rem;
+  color: var(--color-primario);
+  font-weight: 800;
+  line-height: 1;
+}
+.btn-subir-foto .btn-subir-texto {
+  font-weight: 700;
+  font-size: .9rem;
+  letter-spacing: .5px;
+  color: var(--color-primario);
+}
+.btn-subir-foto .btn-subir-limite {
+  font-size: .75rem;
+  color: var(--color-meta);
+}
+input[type="file"].input-oculto {
+  display: none;
+}
+
+/* ============ AJUSTES ============ */
+.fila-ajustes { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+.paleta-colores { display: flex; gap: 10px; flex-wrap: wrap; }
+.color-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 3px solid transparent; cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+}
+.color-btn.seleccionado { border-color: var(--color-texto); }
+.color-btn[data-color="rojo"]     { background: #e53935; }
+.color-btn[data-color="verde"]    { background: #43a047; }
+.color-btn[data-color="vino"]     { background: #8e2434; }
+.color-btn[data-color="azul"]     { background: #1976d2; }
+.color-btn[data-color="morado"]   { background: #9c27b0; }
+.color-btn[data-color="purpura"]  { background: #6a1b9a; }
+.color-btn[data-color="dorado"]   { background: #c9a227; }
+.color-btn[data-color="amarillo"] { background: #fbc02d; }
+.color-btn[data-color="gris"]     { background: #607d8b; }
+.color-btn[data-color="naranja"]  { background: #ff6b35; }
+
+.color-btn[data-color="predeterminado"] {
+  background: #fafafa !important;
+  border: 3px solid #c0c0c0 !important;
+}
+.color-btn[data-color="predeterminado"].seleccionado {
+  border-color: #1976d2 !important;
+  box-shadow: 0 0 0 2px #1976d2, 0 2px 6px rgba(0,0,0,.25);
+}
+
+.opcion-lectura { margin-bottom: 12px; }
+.opcion-lectura label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: 4px; }
+.opcion-lectura input[type="range"] { width: 100%; }
+
+.switch-label {
+  display: flex !important; flex-direction: row !important;
+  align-items: center; gap: 10px;
+  font-size: .9rem; cursor: pointer;
+  padding: 10px 14px;
+  background: var(--color-tarjeta);
+  border: 1px solid var(--color-borde);
+  border-radius: 20px;
+}
+.switch-label input[type="checkbox"] { width: 20px; height: 20px; }
+
+/* ============ SIGUIENDO ============ */
+.lista-autores { display: flex; flex-direction: column; gap: 10px; }
+.autor-card {
+  display: flex; gap: 14px; align-items: center;
+  background: var(--color-tarjeta); padding: 14px; border-radius: 14px;
+  border: 1px solid var(--color-borde);
+  box-shadow: 0 2px 6px rgba(0,0,0,.06);
+}
+.autor-card .avatar {
+  width: 54px; height: 54px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primario), var(--color-primario-oscuro));
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 1.5rem; overflow: hidden;
+  flex-shrink: 0; border: 2px solid var(--color-tarjeta);
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+.autor-card .avatar img { width: 100%; height: 100%; object-fit: cover; }
+.autor-card .info-autor { flex: 1; min-width: 0; }
+.autor-card .nombre-autor {
+  font-weight: 700; font-size: 1rem; margin-bottom: 4px;
+  color: var(--color-texto); word-break: break-word;
+}
+.autor-card .meta-autor {
+  font-size: .78rem; color: var(--color-meta);
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.autor-card .meta-autor span { display: inline-flex; align-items: center; gap: 4px; }
+.autor-card .btn-secundario { margin: 0; padding: 8px 12px; font-size: .8rem; white-space: nowrap; }
+
+/* ============ TOASTS ============ */
+.toast-container {
+  position: fixed; top: 68px; left: 50%; transform: translateX(-50%);
+  z-index: 100; display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none; width: 92%; max-width: 420px;
+}
+.toast {
+  padding: 12px 16px; border-radius: 10px;
+  background: var(--color-tarjeta); color: var(--color-texto);
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  border-left: 4px solid var(--color-primario);
+  font-size: .9rem; opacity: 0; transform: translateY(-10px);
+  transition: opacity .25s, transform .25s; pointer-events: auto;
+  line-height: 1.4;
+}
+.toast.visible { opacity: 1; transform: translateY(0); }
+.toast-error   { border-left-color: #e53935; }
+.toast-success { border-left-color: #43a047; }
+.toast-info    { border-left-color: var(--color-primario); }
+.toast-warn    { border-left-color: #f5a623; }
+
+/* ============ BOTÓN FLOTANTE ============ */
+.btn-flotante {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  left: auto !important;
+  top: auto !important;
+  width: 60px !important;
+  height: 60px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, var(--color-primario), var(--color-primario-oscuro)) !important;
+  color: white !important;
+  border: none !important;
+  font-size: 1.5rem !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.35) !important;
+  z-index: 50 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform .15s !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.btn-flotante:active { transform: scale(.92) !important; }
