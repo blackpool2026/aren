@@ -323,14 +323,14 @@
         <p id="metaCapitulo" class="meta"></p>
 
         <div class="lectura-controles">
-          <button id="btnLecturaMenos" class="btn-secundario">A−</button>
-          <button id="btnLecturaMas" class="btn-secundario">A+</button>
-          <button id="btnLecturaSerif" class="btn-secundario">Serif</button>
-          <button id="btnLecturaSans" class="btn-secundario">Sans</button>
-          <button id="btnLecturaAncho" class="btn-secundario">Ancho</button>
-          <button id="btnSepia" class="btn-secundario">📜 Sepia</button>
-          <button id="btnPantallaCompleta" class="btn-secundario">⛶️</button>
-          <button id="btnTTS" class="btn-secundario">🔊</button>
+          <button id="btnLecturaMenos" class="btn-secundario" aria-label="Reducir tamaño de letra">A−</button>
+          <button id="btnLecturaMas" class="btn-secundario" aria-label="Aumentar tamaño de letra">A+</button>
+          <button id="btnLecturaSerif" class="btn-secundario" aria-label="Fuente serif">Serif</button>
+          <button id="btnLecturaSans" class="btn-secundario" aria-label="Fuente sans">Sans</button>
+          <button id="btnLecturaAncho" class="btn-secundario" aria-label="Cambiar ancho">Ancho</button>
+          <button id="btnSepia" class="btn-secundario" aria-label="Modo sepia">📜 Sepia</button>
+          <button id="btnPantallaCompleta" class="btn-secundario" aria-label="Pantalla completa">⛶️</button>
+          <button id="btnTTS" class="btn-secundario" aria-label="Leer en voz alta">🔊</button>
         </div>
 
         <div id="contenidoCapitulo" class="contenido-lectura"></div>
@@ -468,7 +468,8 @@
       </div>
     </main>
 
-    <button id="btnSalirPantallaCompleta" class="salir-pantalla-completa" style="display:none;">✕</button>
+    <!-- Botón flotante para salir de pantalla completa (rediseñado Bloque 4) -->
+    <button id="btnSalirPantallaCompleta" class="salir-pantalla-completa" style="display:none;" aria-label="Salir de pantalla completa">✕</button>
 
     <div id="toastContainer" class="toast-container"></div>
 
