@@ -56,15 +56,38 @@
       <h1 class="auth-logo">Crear cuenta</h1>
 
       <form id="formRegistro" class="auth-form">
-        <label>Nombre de usuario
+        <label>Nombre
+          <input type="text" id="regNombre" required maxlength="40" placeholder="Tu nombre">
+        </label>
+
+        <label>Apellido
+          <input type="text" id="regApellido" required maxlength="40" placeholder="Tu apellido">
+        </label>
+
+        <label>Género
+          <select id="regGenero" required>
+            <option value="">Selecciona...</option>
+            <option value="masculino">Masculino</option>
+            <option value="femenino">Femenino</option>
+          </select>
+        </label>
+
+        <label>Fecha de nacimiento
+          <input type="date" id="regFechaNacimiento" required>
+        </label>
+
+        <label>Nombre de usuario (público)
           <input type="text" id="regUsername" required maxlength="30" placeholder="Tu nombre de autor">
         </label>
+
         <label>Correo electrónico
           <input type="email" id="regEmail" required placeholder="tu@correo.com">
         </label>
+
         <label>Contraseña (mínimo 6 caracteres)
           <input type="password" id="regPassword" required minlength="6" placeholder="••••••••">
         </label>
+
         <button type="submit" class="btn-primario" id="btnRegistroSubmit">Crear cuenta</button>
       </form>
 
@@ -468,7 +491,7 @@
       </div>
     </main>
 
-    <!-- Botón flotante para salir de pantalla completa (rediseñado Bloque 4) -->
+    <!-- Botón flotante para salir de pantalla completa -->
     <button id="btnSalirPantallaCompleta" class="salir-pantalla-completa" style="display:none;" aria-label="Salir de pantalla completa">✕</button>
 
     <div id="toastContainer" class="toast-container"></div>
