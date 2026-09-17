@@ -82,16 +82,6 @@ function actualizarEdadUsuario(fechaNacimiento) {
   };
 }
 
-function formatearFecha(fechaISO) {
-  if (!fechaISO) return '—';
-  try {
-    const d = new Date(fechaISO);
-    return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
-  } catch (e) {
-    return '—';
-  }
-}
-
 function formatearMiembroDesde(fechaISO) {
   if (!fechaISO) return '';
   try {
@@ -565,11 +555,9 @@ document.getElementById('formRegistro').onsubmit = async e => {
   const password = document.getElementById('regPassword').value;
   const btn = document.getElementById('btnRegistroSubmit');
 
-  // Limpiar mensaje anterior
   errorRegEdad.style.display = 'none';
   errorRegEdad.textContent = '';
 
-  // Validaciones
   if (!nombre) { toast('Falta el nombre', 'error'); return; }
   if (!apellido) { toast('Falta el apellido', 'error'); return; }
   if (!genero) { toast('Selecciona un género', 'error'); return; }
@@ -578,7 +566,6 @@ document.getElementById('formRegistro').onsubmit = async e => {
   if (!email) { toast('Falta el correo', 'error'); return; }
   if (password.length < 6) { toast('La contraseña debe tener al menos 6 caracteres', 'error'); return; }
 
-  // Validar edad
   const edad = calcularEdad(fechaNacimiento);
   if (edad === null) { toast('Fecha de nacimiento inválida', 'error'); return; }
   if (edad < EDAD_MINIMA) {
@@ -611,7 +598,6 @@ document.getElementById('formRegistro').onsubmit = async e => {
 
     if (error) { mostrarErrorCompleto(error, 'Error al registrar'); return; }
 
-    // Guardar en profiles si hay session (sin verificar email)
     if (data && data.user && data.session) {
       try {
         await guardarPerfilSupabase({
@@ -706,7 +692,6 @@ document.getElementById('btnCerrarSesion').onclick = async () => {
 async function inicializarApp(user) {
   usuarioActual = user;
 
-  // Cargar perfil desde Supabase
   let perfilSupabase = await cargarPerfilSupabase(user.id);
 
   if (perfilSupabase) {
@@ -1990,14 +1975,13 @@ document.getElementById('formComentario').onsubmit = e => {
 };
 
 /* =========================================================
-   PERFIL — SESIÓN 1 (completo)
+   PERFIL
 ========================================================= */
 let fotoPerfilTemp = null;
 
 async function renderizarPerfil() {
   if (!perfilActual) return;
 
-  // Cabecera del perfil
   document.getElementById('perfilHeaderNombre').textContent =
     ((perfilActual.nombre || '') + ' ' + (perfilActual.apellido || '')).trim() || perfilActual.username || 'Anónimo';
   document.getElementById('perfilHeaderUsername').textContent = '@' + (perfilActual.username || 'anonimo');
@@ -2018,7 +2002,6 @@ async function renderizarPerfil() {
 
   document.getElementById('perfilHeaderMiembro').textContent = '🎂 ' + formatearMiembroDesde(perfilActual.created_at);
 
-  // Avatar
   const av = document.getElementById('perfilAvatar');
   if (perfilActual.avatar_url) {
     av.innerHTML = `<img src="${perfilActual.avatar_url}">`;
@@ -2029,25 +2012,21 @@ async function renderizarPerfil() {
   }
   fotoPerfilTemp = null;
 
-  // Formulario de datos personales
   document.getElementById('perfilNombreReal').value = perfilActual.nombre || '';
   document.getElementById('perfilApellido').value = perfilActual.apellido || '';
   document.getElementById('perfilGenero').value = perfilActual.genero || '';
   document.getElementById('perfilFechaNacimiento').value = perfilActual.fecha_nacimiento || '';
 
-  // Info de solo lectura
   document.getElementById('perfilEdadMostrada').textContent = edadUsuario ? edadUsuario.anios + ' años' : '—';
   document.getElementById('perfilModoMostrado').textContent = edadUsuario
     ? (edadUsuario.esMenor ? '👶 Menor de edad' : '✅ Mayor de edad')
     : '—';
   document.getElementById('perfilMiembroDesdeMostrado').textContent = formatearMiembroDesde(perfilActual.created_at) || '—';
 
-  // Datos públicos
   document.getElementById('perfilNombre').value = perfilActual.username || 'Anónimo';
   document.getElementById('perfilBio').value = perfilActual.bio || '';
   document.getElementById('perfilEmoji').value = perfilActual.emoji || '👤';
 
-  // Historias
   const cont = document.getElementById('misHistorias');
   cont.innerHTML = '<p style="color:#888;">⏳ Cargando...</p>';
   const mis = await misHistoriasSupabase();
@@ -2087,28 +2066,14 @@ document.getElementById('formPerfil').onsubmit = async e => {
   const nombre = document.getElementById('perfilNombreReal').value.trim();
   const apellido = document.getElementById('perfilApellido').value.trim();
   const genero = document.getElementById('perfilGenero').value;
-  const fechaNacimiento = document.getElementById('perfilFechaNacimiento').value;
+  // Fecha de nacimiento NO se puede cambiar
   const username = document.getElementById('perfilNombre').value.trim() || 'Anónimo';
   const bio = document.getElementById('perfilBio').value.trim();
   const emoji = document.getElementById('perfilEmoji').value.trim() || '👤';
 
-  // Validar edad si hay fecha
-  if (fechaNacimiento) {
-    const edadNueva = calcularEdad(fechaNacimiento);
-    if (edadNueva === null) {
-      toast('Fecha de nacimiento inválida', 'error');
-      return;
-    }
-    if (edadNueva < EDAD_MINIMA) {
-      toast(`Debes tener al menos ${EDAD_MINIMA} años.`, 'error', 5000);
-      return;
-    }
-  }
-
   perfilActual = {
     ...perfilActual,
     nombre, apellido, genero,
-    fecha_nacimiento: fechaNacimiento || null,
     username, bio, emoji,
     avatar_url: fotoPerfilTemp || perfilActual.avatar_url || null
   };
@@ -2119,14 +2084,11 @@ document.getElementById('formPerfil').onsubmit = async e => {
       nombre,
       apellido,
       genero,
-      fecha_nacimiento: fechaNacimiento || null,
       bio,
       emoji,
       avatar_url: perfilActual.avatar_url
+      // fecha_nacimiento NO se envía: no se puede cambiar desde el perfil
     });
-
-    // Actualizar edad en memoria
-    actualizarEdadUsuario(perfilActual.fecha_nacimiento);
 
     for (const h of _historiasCache) {
       if (h.user_id === usuarioActual.id) {
