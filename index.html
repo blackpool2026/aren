@@ -162,9 +162,12 @@
       <div id="panelFormulario" class="panel-tab" style="display:none;">
         <h3 id="tituloFormulario" class="subtitulo">Nueva historia</h3>
         <form id="formHistoria" class="formulario" novalidate>
-          <label>Portada (PNG o JPG, máx. 3 MB)
-            <input type="file" id="portada" accept="image/png, image/jpeg">
+          <label for="portada" class="btn-subir-foto">
+            <span class="btn-subir-icono">+</span>
+            <span class="btn-subir-texto">AÑADIR</span>
+            <span class="btn-subir-limite">Máximo (3 MB)</span>
           </label>
+          <input type="file" id="portada" accept="image/png, image/jpeg" class="input-oculto">
           <div id="previewPortada" class="preview-portada"></div>
           <p class="form-progress" id="infoPortada"></p>
 
@@ -326,7 +329,7 @@
           <button id="btnLecturaSans" class="btn-secundario">Sans</button>
           <button id="btnLecturaAncho" class="btn-secundario">Ancho</button>
           <button id="btnSepia" class="btn-secundario">📜 Sepia</button>
-          <button id="btnPantallaCompleta" class="btn-secundario">⛶</button>
+          <button id="btnPantallaCompleta" class="btn-secundario">⛶️</button>
           <button id="btnTTS" class="btn-secundario">🔊</button>
         </div>
 
