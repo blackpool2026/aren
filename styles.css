@@ -777,7 +777,6 @@ body.modo-oscuro .perfil-badge.menor { background: #4a3a10; color: #ffd966; }
 .perfil-info-label { color: var(--color-meta); font-weight: 600; }
 .perfil-info-valor { color: var(--color-texto); font-weight: 700; }
 
-/* Nota de fecha de nacimiento no editable */
 .perfil-info-nota {
   font-size: .75rem;
   color: var(--color-meta);
@@ -935,3 +934,107 @@ input[type="file"].input-oculto { display: none; }
   padding: 0 !important;
 }
 .btn-flotante:active { transform: scale(.92) !important; }
+
+/* =========================================================
+   SESIÓN 2: GRIDS DE GÉNEROS Y SUBGÉNEROS
+========================================================= */
+
+.label-seccion {
+  font-size: .9rem !important;
+  font-weight: 700 !important;
+  color: var(--color-texto);
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.contador-seleccion {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--color-meta);
+}
+
+.contador-seleccion.completo {
+  color: #f5a623;
+}
+
+.grid-generos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.grid-generos .btn-genero {
+  background: var(--color-tarjeta);
+  border: 2px solid var(--color-borde);
+  color: var(--color-texto);
+  padding: 10px 6px;
+  border-radius: 10px;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s ease;
+  text-align: center;
+  line-height: 1.2;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.grid-generos .btn-genero:hover {
+  border-color: var(--color-primario);
+  transform: translateY(-1px);
+}
+
+.grid-generos .btn-genero:active {
+  transform: scale(.97);
+}
+
+.grid-generos .btn-genero.seleccionado {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+  color: white;
+  box-shadow: 0 2px 8px rgba(25,118,210,.35);
+}
+
+.grid-generos .btn-genero.deshabilitado {
+  opacity: .35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Móvil muy chico: 2 columnas */
+@media (max-width: 380px) {
+  .grid-generos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Modo oscuro */
+body.modo-oscuro .grid-generos .btn-genero.seleccionado {
+  box-shadow: 0 2px 8px rgba(25,118,210,.6);
+}
+
+/* Mostrar subgéneros en tarjetas y lector */
+.subgeneros-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.subgeneros-chips .etiqueta-sub {
+  display: inline-block;
+  background: rgba(25,118,210,.15);
+  color: var(--color-primario);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: .68rem;
+  font-weight: 600;
+}
+body.modo-oscuro .subgeneros-chips .etiqueta-sub {
+  background: rgba(25,118,210,.25);
+}
