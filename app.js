@@ -12,7 +12,9 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let usuarioActual = null;
 let perfilActual = null;
 let _historiasCache = [];
-let edadUsuario = null; // { anios: number, esMenor: boolean }
+let edadUsuario = null; // { anios, esMenor }
+
+const EDAD_MINIMA = 13;
 
 /* =========================================================
    UTILIDADES
@@ -53,7 +55,7 @@ function mostrarErrorCompleto(err, contexto = '') {
 }
 
 /* =========================================================
-   CÁLCULO DE EDAD Y MENOR/MOD ADULTO
+   EDAD Y FORMATO DE FECHAS
 ========================================================= */
 function calcularEdad(fechaNacimiento) {
   if (!fechaNacimiento) return null;
@@ -80,13 +82,32 @@ function actualizarEdadUsuario(fechaNacimiento) {
   };
 }
 
+function formatearFecha(fechaISO) {
+  if (!fechaISO) return '—';
+  try {
+    const d = new Date(fechaISO);
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+  } catch (e) {
+    return '—';
+  }
+}
+
+function formatearMiembroDesde(fechaISO) {
+  if (!fechaISO) return '';
+  try {
+    const d = new Date(fechaISO);
+    const mes = d.toLocaleDateString('es-ES', { month: 'long' });
+    return 'Miembro desde ' + mes + ' ' + d.getFullYear();
+  } catch (e) {
+    return '';
+  }
+}
+
 /* =========================================================
-   FILTRAR HISTORIAS SEGÚN EDAD
+   FILTRO POR EDAD
 ========================================================= */
 function historiaEsAptaParaMi(h) {
-  // Si no es menor, ve todo
   if (!edadUsuario || !edadUsuario.esMenor) return true;
-  // Si es menor, bloquear cualquier historia con advertencias
   if (h.advertencias && h.advertencias.length > 0) return false;
   return true;
 }
@@ -126,7 +147,7 @@ const getAjustes = () => {
 const setAjustes = v => localStorage.setItem(claveUsuario('aren_ajustes'), JSON.stringify(v));
 
 /* =========================================================
-   INDEXEDDB (caché local de imágenes viejas)
+   INDEXEDDB
 ========================================================= */
 const DB_NOMBRE = 'aren-datos';
 const DB_VERSION = 2;
@@ -331,7 +352,6 @@ async function eliminarCapituloSupabase(capituloId) {
    PERFIL EN SUPABASE
 ========================================================= */
 async function guardarPerfilSupabase(datos) {
-  // Intentar actualizar. Si no existe, insertar.
   const { data: existe } = await supabaseClient
     .from('profiles')
     .select('id')
@@ -359,7 +379,7 @@ async function cargarPerfilSupabase(userId) {
       .select('*')
       .eq('id', userId)
       .single();
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+    if (error && error.code !== 'PGRST116') throw error;
     return data || null;
   } catch (e) {
     console.error('Error cargando perfil:', e);
@@ -368,7 +388,7 @@ async function cargarPerfilSupabase(userId) {
 }
 
 /* =========================================================
-   STORAGE: PORTADAS (bucket "Portadas")
+   STORAGE: PORTADAS
 ========================================================= */
 async function subirPortadaSupabase(archivo, storyId) {
   const extension = (archivo.name || 'img.jpg').split('.').pop().toLowerCase() || 'jpg';
@@ -466,6 +486,35 @@ document.getElementById('linkIrRegistro').onclick = e => { e.preventDefault(); m
 document.getElementById('linkIrLogin').onclick = e => { e.preventDefault(); mostrarLogin(); };
 
 /* =========================================================
+   VALIDACIÓN EN VIVO DE EDAD EN REGISTRO
+========================================================= */
+const inputRegFecha = document.getElementById('regFechaNacimiento');
+const errorRegEdad = document.getElementById('regErrorEdad');
+
+if (inputRegFecha && errorRegEdad) {
+  inputRegFecha.addEventListener('input', () => {
+    const fecha = inputRegFecha.value;
+    if (!fecha) {
+      errorRegEdad.style.display = 'none';
+      errorRegEdad.textContent = '';
+      return;
+    }
+    const edad = calcularEdad(fecha);
+    if (edad === null) {
+      errorRegEdad.style.display = 'none';
+      return;
+    }
+    if (edad < EDAD_MINIMA) {
+      errorRegEdad.style.display = 'block';
+      errorRegEdad.textContent = `❌ Lo sentimos, debes tener al menos ${EDAD_MINIMA} años para usar Aren. Pídele a un adulto que te ayude a crear la cuenta.`;
+    } else {
+      errorRegEdad.style.display = 'none';
+      errorRegEdad.textContent = '';
+    }
+  });
+}
+
+/* =========================================================
    DIAGNÓSTICO
 ========================================================= */
 document.getElementById('btnDiagnostico').onclick = async () => {
@@ -497,7 +546,6 @@ document.getElementById('btnDiagnostico').onclick = async () => {
     toast('❌ Storage falló: ' + e.message, 'error', 6000);
   }
 
-  // Diagnóstico de edad
   if (edadUsuario) {
     toast(`📅 Tu edad: ${edadUsuario.anios} años (${edadUsuario.esMenor ? 'modo menor' : 'modo adulto'})`, 'info', 5000);
   }
@@ -517,6 +565,10 @@ document.getElementById('formRegistro').onsubmit = async e => {
   const password = document.getElementById('regPassword').value;
   const btn = document.getElementById('btnRegistroSubmit');
 
+  // Limpiar mensaje anterior
+  errorRegEdad.style.display = 'none';
+  errorRegEdad.textContent = '';
+
   // Validaciones
   if (!nombre) { toast('Falta el nombre', 'error'); return; }
   if (!apellido) { toast('Falta el apellido', 'error'); return; }
@@ -526,11 +578,14 @@ document.getElementById('formRegistro').onsubmit = async e => {
   if (!email) { toast('Falta el correo', 'error'); return; }
   if (password.length < 6) { toast('La contraseña debe tener al menos 6 caracteres', 'error'); return; }
 
-  // Validar edad mínima
+  // Validar edad
   const edad = calcularEdad(fechaNacimiento);
   if (edad === null) { toast('Fecha de nacimiento inválida', 'error'); return; }
-  if (edad < 13) {
-    toast('Debes tener al menos 13 años para usar Aren.', 'error', 8000);
+  if (edad < EDAD_MINIMA) {
+    errorRegEdad.style.display = 'block';
+    errorRegEdad.textContent = `❌ Lo sentimos, debes tener al menos ${EDAD_MINIMA} años para usar Aren. Pídele a un adulto que te ayude a crear la cuenta.`;
+    errorRegEdad.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    toast(`Debes tener al menos ${EDAD_MINIMA} años para registrarte.`, 'error', 6000);
     return;
   }
 
@@ -556,7 +611,7 @@ document.getElementById('formRegistro').onsubmit = async e => {
 
     if (error) { mostrarErrorCompleto(error, 'Error al registrar'); return; }
 
-    // Guardar en la tabla profiles si ya tenemos session
+    // Guardar en profiles si hay session (sin verificar email)
     if (data && data.user && data.session) {
       try {
         await guardarPerfilSupabase({
@@ -579,6 +634,7 @@ document.getElementById('formRegistro').onsubmit = async e => {
     else toast('✅ ¡Cuenta creada! Ya puedes entrar.', 'success', 5000);
 
     document.getElementById('formRegistro').reset();
+    errorRegEdad.style.display = 'none';
     setTimeout(() => mostrarLogin(), 2500);
 
   } catch (err) {
@@ -663,9 +719,9 @@ async function inicializarApp(user) {
       bio: perfilSupabase.bio || '',
       emoji: perfilSupabase.emoji || '👤',
       avatar_url: perfilSupabase.avatar_url || null,
+      created_at: perfilSupabase.created_at || user.created_at || null,
     };
   } else {
-    // Fallback: usar metadata del auth
     const meta = user.user_metadata || {};
     perfilActual = {
       username: meta.username || (user.email ? user.email.split('@')[0] : 'Anónimo'),
@@ -676,9 +732,9 @@ async function inicializarApp(user) {
       bio: '',
       emoji: meta.emoji || '👤',
       avatar_url: null,
+      created_at: user.created_at || null,
     };
 
-    // Intentar guardarlo en profiles (por si se registró antes de tener la tabla lista)
     try {
       await guardarPerfilSupabase({
         username: perfilActual.username,
@@ -695,20 +751,9 @@ async function inicializarApp(user) {
     }
   }
 
-  // Calcular edad
   actualizarEdadUsuario(perfilActual.fecha_nacimiento);
-
   actualizarAvatarCabecera();
-
-  const drawerUser = document.getElementById('drawerUsuario');
-  if (drawerUser) {
-    const edadTxt = edadUsuario ? ` · ${edadUsuario.anios} años` : '';
-    const modoTxt = edadUsuario ? (edadUsuario.esMenor ? ' · 👶 Menor' : ' · ✅ Adulto') : '';
-    drawerUser.innerHTML = `
-      <span class="nombre-drawer">${escapeHtml(perfilActual.username || 'Anónimo')}</span>
-      ${escapeHtml(user.email || '')}${edadTxt}${modoTxt}
-    `;
-  }
+  actualizarDrawerUsuario();
 
   toast('☁️ Cargando historias...', 'info', 2000);
   await recargarHistorias();
@@ -729,6 +774,25 @@ function actualizarAvatarCabecera() {
   } else {
     btn.textContent = (perfilActual && perfilActual.emoji) || '👤';
   }
+}
+
+/* =========================================================
+   DRAWER USUARIO
+========================================================= */
+function actualizarDrawerUsuario() {
+  const drawerUser = document.getElementById('drawerUsuario');
+  if (!drawerUser || !usuarioActual) return;
+
+  const edadTxt = edadUsuario ? `📅 ${edadUsuario.anios} años` : '';
+  const modoTxt = edadUsuario ? (edadUsuario.esMenor ? '👶 Menor de edad' : '✅ Mayor de edad') : '';
+  const miembroTxt = formatearMiembroDesde(perfilActual.created_at);
+
+  drawerUser.innerHTML = `
+    <span class="nombre-drawer">${escapeHtml(perfilActual.username || 'Anónimo')}</span>
+    ${escapeHtml(usuarioActual.email || '')}
+    ${edadTxt ? `<span class="info-edad-drawer">${edadTxt} · ${modoTxt}</span>` : ''}
+    ${miembroTxt ? `<span class="miembro-drawer">🎂 ${miembroTxt}</span>` : ''}
+  `;
 }
 
 /* =========================================================
@@ -980,7 +1044,6 @@ async function renderizarHistorias(filtro = '') {
   await recargarHistorias();
 
   cont.innerHTML = '';
-  // Filtrar por visibilidad + edad + búsqueda
   const historias = filtrarHistoriasPorEdad(_historiasCache.filter(esVisible)).filter(h => {
     if (!filtro) return true;
     const t = (h.titulo + ' ' + (h.autor || '') + ' ' + h.genero + ' ' + h.etiquetas.join(' ')).toLowerCase();
@@ -1028,7 +1091,6 @@ function renderizarBiblioteca() {
   const vacio = document.getElementById('bibliotecaVacia');
   cont.innerHTML = '';
   const ids = getBiblioteca();
-  // Filtrar por edad también en biblioteca
   const historias = filtrarHistoriasPorEdad(_historiasCache.filter(h => ids.includes(h.id)));
   if (!historias.length) vacio.style.display = 'block';
   else { vacio.style.display = 'none'; historias.forEach(h => cont.appendChild(crearTarjeta(h))); }
@@ -1411,7 +1473,6 @@ async function abrirLector(id) {
     return mostrarVista('inicio');
   }
 
-  // BLOQUEO POR EDAD
   if (!historiaEsAptaParaMi(h)) {
     toast('🔞 Esta historia contiene contenido no apto para tu edad.', 'warn', 8000);
     return mostrarVista('inicio');
@@ -1929,15 +1990,35 @@ document.getElementById('formComentario').onsubmit = e => {
 };
 
 /* =========================================================
-   PERFIL
+   PERFIL — SESIÓN 1 (completo)
 ========================================================= */
 let fotoPerfilTemp = null;
 
 async function renderizarPerfil() {
   if (!perfilActual) return;
-  document.getElementById('perfilNombre').value = perfilActual.username || 'Anónimo';
-  document.getElementById('perfilBio').value = perfilActual.bio || '';
-  document.getElementById('perfilEmoji').value = perfilActual.emoji || '👤';
+
+  // Cabecera del perfil
+  document.getElementById('perfilHeaderNombre').textContent =
+    ((perfilActual.nombre || '') + ' ' + (perfilActual.apellido || '')).trim() || perfilActual.username || 'Anónimo';
+  document.getElementById('perfilHeaderUsername').textContent = '@' + (perfilActual.username || 'anonimo');
+
+  const badge = document.getElementById('perfilHeaderModo');
+  if (edadUsuario) {
+    if (edadUsuario.esMenor) {
+      badge.textContent = `👶 Menor de edad · ${edadUsuario.anios} años`;
+      badge.className = 'perfil-badge menor';
+    } else {
+      badge.textContent = `✅ Mayor de edad · ${edadUsuario.anios} años`;
+      badge.className = 'perfil-badge';
+    }
+  } else {
+    badge.textContent = 'Edad no especificada';
+    badge.className = 'perfil-badge';
+  }
+
+  document.getElementById('perfilHeaderMiembro').textContent = '🎂 ' + formatearMiembroDesde(perfilActual.created_at);
+
+  // Avatar
   const av = document.getElementById('perfilAvatar');
   if (perfilActual.avatar_url) {
     av.innerHTML = `<img src="${perfilActual.avatar_url}">`;
@@ -1948,6 +2029,25 @@ async function renderizarPerfil() {
   }
   fotoPerfilTemp = null;
 
+  // Formulario de datos personales
+  document.getElementById('perfilNombreReal').value = perfilActual.nombre || '';
+  document.getElementById('perfilApellido').value = perfilActual.apellido || '';
+  document.getElementById('perfilGenero').value = perfilActual.genero || '';
+  document.getElementById('perfilFechaNacimiento').value = perfilActual.fecha_nacimiento || '';
+
+  // Info de solo lectura
+  document.getElementById('perfilEdadMostrada').textContent = edadUsuario ? edadUsuario.anios + ' años' : '—';
+  document.getElementById('perfilModoMostrado').textContent = edadUsuario
+    ? (edadUsuario.esMenor ? '👶 Menor de edad' : '✅ Mayor de edad')
+    : '—';
+  document.getElementById('perfilMiembroDesdeMostrado').textContent = formatearMiembroDesde(perfilActual.created_at) || '—';
+
+  // Datos públicos
+  document.getElementById('perfilNombre').value = perfilActual.username || 'Anónimo';
+  document.getElementById('perfilBio').value = perfilActual.bio || '';
+  document.getElementById('perfilEmoji').value = perfilActual.emoji || '👤';
+
+  // Historias
   const cont = document.getElementById('misHistorias');
   cont.innerHTML = '<p style="color:#888;">⏳ Cargando...</p>';
   const mis = await misHistoriasSupabase();
@@ -1983,23 +2083,50 @@ document.getElementById('btnQuitarFoto').onclick = () => {
 
 document.getElementById('formPerfil').onsubmit = async e => {
   e.preventDefault();
+
+  const nombre = document.getElementById('perfilNombreReal').value.trim();
+  const apellido = document.getElementById('perfilApellido').value.trim();
+  const genero = document.getElementById('perfilGenero').value;
+  const fechaNacimiento = document.getElementById('perfilFechaNacimiento').value;
   const username = document.getElementById('perfilNombre').value.trim() || 'Anónimo';
   const bio = document.getElementById('perfilBio').value.trim();
   const emoji = document.getElementById('perfilEmoji').value.trim() || '👤';
 
-  perfilActual = { ...perfilActual, username, bio, emoji, avatar_url: fotoPerfilTemp || perfilActual.avatar_url || null };
+  // Validar edad si hay fecha
+  if (fechaNacimiento) {
+    const edadNueva = calcularEdad(fechaNacimiento);
+    if (edadNueva === null) {
+      toast('Fecha de nacimiento inválida', 'error');
+      return;
+    }
+    if (edadNueva < EDAD_MINIMA) {
+      toast(`Debes tener al menos ${EDAD_MINIMA} años.`, 'error', 5000);
+      return;
+    }
+  }
+
+  perfilActual = {
+    ...perfilActual,
+    nombre, apellido, genero,
+    fecha_nacimiento: fechaNacimiento || null,
+    username, bio, emoji,
+    avatar_url: fotoPerfilTemp || perfilActual.avatar_url || null
+  };
 
   try {
     await guardarPerfilSupabase({
       username,
+      nombre,
+      apellido,
+      genero,
+      fecha_nacimiento: fechaNacimiento || null,
       bio,
       emoji,
-      avatar_url: perfilActual.avatar_url,
-      nombre: perfilActual.nombre || '',
-      apellido: perfilActual.apellido || '',
-      genero: perfilActual.genero || '',
-      fecha_nacimiento: perfilActual.fecha_nacimiento || null
+      avatar_url: perfilActual.avatar_url
     });
+
+    // Actualizar edad en memoria
+    actualizarEdadUsuario(perfilActual.fecha_nacimiento);
 
     for (const h of _historiasCache) {
       if (h.user_id === usuarioActual.id) {
@@ -2009,17 +2136,9 @@ document.getElementById('formPerfil').onsubmit = async e => {
 
     toast('Perfil guardado', 'success');
     actualizarAvatarCabecera();
+    actualizarDrawerUsuario();
     await recargarHistorias();
-
-    const drawerUser = document.getElementById('drawerUsuario');
-    if (drawerUser) {
-      const edadTxt = edadUsuario ? ` · ${edadUsuario.anios} años` : '';
-      const modoTxt = edadUsuario ? (edadUsuario.esMenor ? ' · 👶 Menor' : ' · ✅ Adulto') : '';
-      drawerUser.innerHTML = `
-        <span class="nombre-drawer">${escapeHtml(perfilActual.username)}</span>
-        ${escapeHtml(usuarioActual.email || '')}${edadTxt}${modoTxt}
-      `;
-    }
+    await renderizarPerfil();
   } catch (err) { mostrarErrorCompleto(err, 'Error al guardar perfil'); }
 };
 
