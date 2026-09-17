@@ -68,7 +68,7 @@ const setSiguiendo = v => localStorage.setItem(claveUsuario('aren_siguiendo'), J
 
 const ajustesDefault = {
   tema: 'claro',
-  color: 'naranja',
+  color: 'azul',
   scrollInfinito: false,
   lectura: { tamano: 18, interlineado: 1.7, ancho: 700, familia: 'serif' }
 };
@@ -1213,16 +1213,14 @@ document.getElementById('formHistoria').onsubmit = async e => {
 };
 
 /* =========================================================
-   LECTOR (CORREGIDO: también encuentra borradores)
+   LECTOR
 ========================================================= */
 let historiaActual = null;
 let capituloActualIdx = 0;
 
 async function abrirLector(id) {
-  /* Buscar primero en la caché pública */
   let h = _historiasCache.find(x => x.id === id);
 
-  /* Si no está, buscar en mis historias (incluye borradores) */
   if (!h) {
     try {
       const mis = await misHistoriasSupabase();
@@ -1232,7 +1230,6 @@ async function abrirLector(id) {
     }
   }
 
-  /* Si aún no se encuentra, volver a inicio */
   if (!h) {
     toast('No se encontró la historia', 'warn');
     return mostrarVista('inicio');
@@ -1276,12 +1273,21 @@ async function abrirLector(id) {
   document.getElementById('lectorSinopsis').textContent = h.sinopsis;
 
   const soyAutor = esMiHistoria(h);
-  document.getElementById('btnEditarHistoria').style.display = soyAutor ? 'inline-block' : 'none';
-  document.getElementById('btnEliminarHistoria').style.display = soyAutor ? 'inline-block' : 'none';
-  document.getElementById('btnNuevoCapitulo').style.display = soyAutor ? 'inline-block' : 'none';
+
+  /* Bloque autor: mostrar u ocultar el contenedor completo */
+  const bloqueAutor = document.getElementById('accionesAutor');
+  if (bloqueAutor) bloqueAutor.style.display = soyAutor ? 'flex' : 'none';
+
+  /* btnNuevoCapitulo: solo autores */
+  const btnNuevo = document.getElementById('btnNuevoCapitulo');
+  if (btnNuevo) btnNuevo.style.display = soyAutor ? 'inline-block' : 'none';
+
+  /* btnPublicarAhora: solo si es autor Y está en borrador o programada */
   const btnPub = document.getElementById('btnPublicarAhora');
-  const esPendiente = soyAutor && (h.esBorrador || (h.fechaPublicacion && new Date(h.fechaPublicacion) > new Date()));
-  btnPub.style.display = esPendiente ? 'inline-block' : 'none';
+  if (btnPub) {
+    const esPendiente = soyAutor && (h.esBorrador || (h.fechaPublicacion && new Date(h.fechaPublicacion) > new Date()));
+    btnPub.style.display = esPendiente ? 'inline-block' : 'none';
+  }
 
   actualizarBotonGuardar();
   actualizarBotonSeguir();
@@ -1332,8 +1338,8 @@ document.getElementById('btnExportarPDF').onclick = async () => {
   const capsResueltos = (h.capitulos || []).map((c, i) => {
     let nota = '';
     if (c.notaAutor) {
-      nota = `<div style="margin-top:20px;padding:12px 16px;background:#f5f5f5;border-left:4px solid #ff6b35;border-radius:8px;">
-        <strong style="color:#ff6b35;text-transform:uppercase;font-size:.8rem;letter-spacing:1px;">✍️ Nota del autor</strong>
+      nota = `<div style="margin-top:20px;padding:12px 16px;background:#f5f5f5;border-left:4px solid #1976d2;border-radius:8px;">
+        <strong style="color:#1976d2;text-transform:uppercase;font-size:.8rem;letter-spacing:1px;">✍️ Nota del autor</strong>
         <p style="margin-top:8px;">${escapeHtml(c.notaAutor)}</p>
       </div>`;
     }
@@ -1346,7 +1352,7 @@ document.getElementById('btnExportarPDF').onclick = async () => {
     <style>body{font-family:Georgia,serif;max-width:700px;margin:40px auto;padding:20px;line-height:1.6;color:#222}
     h1{text-align:center}h2{margin-top:40px;border-bottom:1px solid #ddd;padding-bottom:6px}
     p{margin-bottom:1em;text-align:justify}img{max-width:100%;height:auto;display:block;margin:16px auto;border-radius:8px}
-    .sinopsis{font-style:italic;padding:14px;background:#f5f5f5;border-left:4px solid #ff6b35;margin-bottom:30px}</style>
+    .sinopsis{font-style:italic;padding:14px;background:#f5f5f5;border-left:4px solid #1976d2;margin-bottom:30px}</style>
     </head><body>
     <h1>${escapeHtml(h.titulo)}</h1>
     <p style="text-align:center;color:#666">por ${escapeHtml(h.autor || 'Anónimo')}</p>
@@ -1394,6 +1400,7 @@ function renderizarEstrellas() {
     const btn = document.createElement('button');
     btn.className = 'estrella' + (i <= Math.round(prom) ? ' activa' : '');
     btn.textContent = '★';
+    btn.setAttribute('aria-label', `Valorar con ${i} estrella${i === 1 ? '' : 's'}`);
     btn.onclick = () => toast('⭐ Valoración registrada localmente', 'info', 2000);
     cont.appendChild(btn);
   }
@@ -1627,6 +1634,11 @@ async function abrirCapitulo(idx) {
   document.getElementById('btnCapAnterior').style.display = idx > 0 ? 'inline-block' : 'none';
   document.getElementById('btnCapSiguiente').style.display = idx < historiaActual.capitulos.length - 1 ? 'inline-block' : 'none';
 
+  /* Animación fade al cambiar de capítulo */
+  cont.classList.remove('fade-in-capitulo');
+  void cont.offsetWidth;
+  cont.classList.add('fade-in-capitulo');
+
   const hist = getHistorial();
   hist[historiaActual.id] = { capituloIdx: idx, fecha: new Date().toISOString() };
   setHistorial(hist);
@@ -1813,8 +1825,8 @@ function aplicarTemaYColor() {
   document.querySelectorAll('.color-btn').forEach(b => {
     b.classList.remove('seleccionado');
     const colorBtn = b.dataset.color;
-    if (a.color === 'naranja' && colorBtn === 'predeterminado') b.classList.add('seleccionado');
-    else if (a.color !== 'naranja' && colorBtn === a.color) b.classList.add('seleccionado');
+    if (a.color === 'azul' && colorBtn === 'predeterminado') b.classList.add('seleccionado');
+    else if (a.color !== 'azul' && colorBtn === a.color) b.classList.add('seleccionado');
   });
 }
 
@@ -1827,12 +1839,12 @@ function crearPaleta() {
   sin.className = 'color-btn';
   sin.style.background = '#fafafa';
   sin.style.border = '3px solid #c0c0c0';
-  sin.title = 'Predeterminado (naranja)';
+  sin.title = 'Predeterminado (azul)';
   sin.dataset.color = 'predeterminado';
   sin.textContent = 'A';
-  sin.style.color = '#ff6b35';
+  sin.style.color = '#1976d2';
   sin.style.fontWeight = '800';
-  sin.onclick = () => { const a = getAjustes(); a.color = 'naranja'; setAjustes(a); aplicarTemaYColor(); };
+  sin.onclick = () => { const a = getAjustes(); a.color = 'azul'; setAjustes(a); aplicarTemaYColor(); };
   paleta.appendChild(sin);
 
   COLORES.forEach(c => {
