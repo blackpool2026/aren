@@ -573,6 +573,18 @@ function actualizarAvatarCabecera() {
 }
 
 /* =========================================================
+   PANTALLA COMPLETA — BLOQUE 4
+   Salir correctamente desde cualquier camino
+========================================================= */
+function salirDePantallaCompleta() {
+  document.body.classList.remove('modo-pantalla-completa');
+  const btnSalir = document.getElementById('btnSalirPantallaCompleta');
+  if (btnSalir) btnSalir.style.display = 'none';
+  // Restaurar scroll por si acaso
+  document.body.style.overflow = '';
+}
+
+/* =========================================================
    NAVEGACIÓN
 ========================================================= */
 const vistas = {
@@ -592,6 +604,11 @@ const vistas = {
 };
 
 async function mostrarVista(nombre) {
+  // Salir de pantalla completa al cambiar de vista
+  if (nombre !== 'lector') {
+    salirDePantallaCompleta();
+  }
+
   document.querySelectorAll('#appPrincipal .vista').forEach(v => {
     v.style.display = 'none';
     v.classList.remove('activa');
@@ -604,7 +621,7 @@ async function mostrarVista(nombre) {
     vistas[nombre].classList.add('activa');
   }
 
-  /* Mostrar botón flotante solo en Inicio */
+  // Mostrar botón flotante solo en Inicio
   const btnFlotante = document.getElementById('btnPublicarFlotante');
   if (btnFlotante) {
     btnFlotante.style.display = (nombre === 'inicio') ? 'flex' : 'none';
@@ -1274,15 +1291,12 @@ async function abrirLector(id) {
 
   const soyAutor = esMiHistoria(h);
 
-  /* Bloque autor: mostrar u ocultar el contenedor completo */
   const bloqueAutor = document.getElementById('accionesAutor');
   if (bloqueAutor) bloqueAutor.style.display = soyAutor ? 'flex' : 'none';
 
-  /* btnNuevoCapitulo: solo autores */
   const btnNuevo = document.getElementById('btnNuevoCapitulo');
   if (btnNuevo) btnNuevo.style.display = soyAutor ? 'inline-block' : 'none';
 
-  /* btnPublicarAhora: solo si es autor Y está en borrador o programada */
   const btnPub = document.getElementById('btnPublicarAhora');
   if (btnPub) {
     const esPendiente = soyAutor && (h.esBorrador || (h.fechaPublicacion && new Date(h.fechaPublicacion) > new Date()));
@@ -1392,6 +1406,9 @@ document.getElementById('btnSeguirAutor').onclick = () => {
   toast(getSiguiendo().includes(autor) ? 'Siguiendo a ' + autor : 'Dejaste de seguir a ' + autor, 'info');
 };
 
+/* =========================================================
+   ESTRELLAS — BLOQUE 4 (con animación pop)
+========================================================= */
 function renderizarEstrellas() {
   const cont = document.getElementById('estrellasValoracion');
   const prom = promedioEstrellas(historiaActual);
@@ -1401,11 +1418,21 @@ function renderizarEstrellas() {
     btn.className = 'estrella' + (i <= Math.round(prom) ? ' activa' : '');
     btn.textContent = '★';
     btn.setAttribute('aria-label', `Valorar con ${i} estrella${i === 1 ? '' : 's'}`);
-    btn.onclick = () => toast('⭐ Valoración registrada localmente', 'info', 2000);
+    btn.onclick = () => {
+      // Animación pop
+      btn.classList.remove('pop');
+      void btn.offsetWidth;
+      btn.classList.add('pop');
+      // Feedback visual
+      cont.querySelectorAll('.estrella').forEach((s, idx) => {
+        s.classList.toggle('activa', idx < i);
+      });
+      toast('⭐ Valoración registrada (pendiente de guardar)', 'info', 2000);
+    };
     cont.appendChild(btn);
   }
   document.getElementById('promedioValoracion').textContent =
-    prom > 0 ? `(${prom} / 5 · ${historiaActual.valoraciones.length} votos)` : '(sin votos)';
+    prom > 0 ? `(${prom} / 5 · ${historiaActual.valoraciones.length} votos)` : '(sin valoraciones aún)';
 }
 
 function renderizarCapitulos() {
@@ -1595,7 +1622,7 @@ document.getElementById('formCapitulo').onsubmit = async e => {
 };
 
 /* =========================================================
-   LEER CAPÍTULO
+   LEER CAPÍTULO — BLOQUE 4 (fade mejorado)
 ========================================================= */
 let ttsActivo = false;
 
@@ -1634,9 +1661,9 @@ async function abrirCapitulo(idx) {
   document.getElementById('btnCapAnterior').style.display = idx > 0 ? 'inline-block' : 'none';
   document.getElementById('btnCapSiguiente').style.display = idx < historiaActual.capitulos.length - 1 ? 'inline-block' : 'none';
 
-  /* Animación fade al cambiar de capítulo */
+  // Animación fade entre capítulos
   cont.classList.remove('fade-in-capitulo');
-  void cont.offsetWidth;
+  void cont.offsetWidth; // forzar reflow
   cont.classList.add('fade-in-capitulo');
 
   const hist = getHistorial();
@@ -1648,7 +1675,11 @@ async function abrirCapitulo(idx) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-document.getElementById('btnVolverCapitulos').onclick = () => { detenerTTS(); abrirLector(historiaActual.id); };
+document.getElementById('btnVolverCapitulos').onclick = () => {
+  detenerTTS();
+  salirDePantallaCompleta(); // Asegurar que se sale de pantalla completa
+  abrirLector(historiaActual.id);
+};
 document.getElementById('btnCapAnterior').onclick = () => abrirCapitulo(capituloActualIdx - 1);
 document.getElementById('btnCapSiguiente').onclick = () => abrirCapitulo(capituloActualIdx + 1);
 
@@ -1665,14 +1696,28 @@ document.getElementById('btnSepia').onclick = () => {
   toast(document.body.classList.contains('sepia') ? 'Modo sepia activado' : 'Modo sepia desactivado', 'info', 1500);
 };
 
+/* Entrar a pantalla completa */
 document.getElementById('btnPantallaCompleta').onclick = () => {
   document.body.classList.add('modo-pantalla-completa');
   document.getElementById('btnSalirPantallaCompleta').style.display = 'flex';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 };
-document.getElementById('btnSalirPantallaCompleta').onclick = () => {
-  document.body.classList.remove('modo-pantalla-completa');
-  document.getElementById('btnSalirPantallaCompleta').style.display = 'none';
-};
+
+/* Salir de pantalla completa con el botón flotante */
+document.getElementById('btnSalirPantallaCompleta').onclick = salirDePantallaCompleta;
+
+/* Salir de pantalla completa con el botón físico atrás del móvil */
+window.addEventListener('popstate', (e) => {
+  if (document.body.classList.contains('modo-pantalla-completa')) {
+    e.preventDefault();
+    salirDePantallaCompleta();
+    history.pushState(null, '', location.href);
+  }
+});
+// Empujar un estado al historial para que "atrás" funcione
+if (typeof history !== 'undefined') {
+  history.pushState(null, '', location.href);
+}
 
 function detenerTTS() {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
