@@ -68,7 +68,28 @@ body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: linear-gradient(135deg, #1976d2 0%, #0d47a1 100%);
+  /* Degradado VERTICAL por defecto (móvil) */
+  background: linear-gradient(
+    180deg,
+    #001a4d 0%,
+    #0d47a1 30%,
+    #1976d2 60%,
+    #00bcd4 100%
+  );
+  background-attachment: fixed;
+}
+
+/* Degradado HORIZONTAL en pantallas grandes (PC/tablet) */
+@media (min-width: 768px) {
+  .vista-auth {
+    background: linear-gradient(
+      90deg,
+      #001a4d 0%,
+      #0d47a1 30%,
+      #1976d2 60%,
+      #00bcd4 100%
+    );
+  }
 }
 
 .auth-container {
@@ -78,9 +99,14 @@ body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
   padding: 32px 24px;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 10px 40px rgba(0,0,0,.25);
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.45),
+    0 8px 20px rgba(0,0,0,.25),
+    0 0 0 1px rgba(255,255,255,.08);
   position: relative;
   animation: fadeInAuth .35s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 @keyframes fadeInAuth {
@@ -89,12 +115,16 @@ body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
 }
 
 .auth-logo {
-  font-size: 2.5rem; font-weight: 800;
-  text-align: center; letter-spacing: 2px;
-  background: linear-gradient(135deg, #1976d2, #0d47a1);
-  -webkit-background-clip: text; background-clip: text;
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 2px;
+  background: linear-gradient(180deg, #ffffff 0%, #f0f4fa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
   margin-bottom: 8px;
+  text-shadow: 0 2px 12px rgba(255,255,255,.15);
 }
 
 .auth-lema {
@@ -1007,19 +1037,16 @@ input[type="file"].input-oculto { display: none; }
   pointer-events: none;
 }
 
-/* Móvil muy chico: 2 columnas */
 @media (max-width: 380px) {
   .grid-generos {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* Modo oscuro */
 body.modo-oscuro .grid-generos .btn-genero.seleccionado {
   box-shadow: 0 2px 8px rgba(25,118,210,.6);
 }
 
-/* Mostrar subgéneros en tarjetas y lector */
 .subgeneros-chips {
   display: flex;
   flex-wrap: wrap;
