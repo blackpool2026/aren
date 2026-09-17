@@ -12,6 +12,7 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let usuarioActual = null;
 let perfilActual = null;
 let _historiasCache = [];
+let edadUsuario = null; // { anios: number, esMenor: boolean }
 
 /* =========================================================
    UTILIDADES
@@ -49,6 +50,49 @@ function mostrarErrorCompleto(err, contexto = '') {
   } else info = String(err);
   toast((contexto ? contexto + ': ' : '') + info, 'error', 10000);
   console.error('🔍 ERROR [' + contexto + ']:', err);
+}
+
+/* =========================================================
+   CÁLCULO DE EDAD Y MENOR/MOD ADULTO
+========================================================= */
+function calcularEdad(fechaNacimiento) {
+  if (!fechaNacimiento) return null;
+  const hoy = new Date();
+  const nac = new Date(fechaNacimiento);
+  if (isNaN(nac.getTime())) return null;
+  let edad = hoy.getFullYear() - nac.getFullYear();
+  const mesDiff = hoy.getMonth() - nac.getMonth();
+  if (mesDiff < 0 || (mesDiff === 0 && hoy.getDate() < nac.getDate())) {
+    edad--;
+  }
+  return edad;
+}
+
+function actualizarEdadUsuario(fechaNacimiento) {
+  const anios = calcularEdad(fechaNacimiento);
+  if (anios === null) {
+    edadUsuario = null;
+    return;
+  }
+  edadUsuario = {
+    anios: anios,
+    esMenor: anios < 18
+  };
+}
+
+/* =========================================================
+   FILTRAR HISTORIAS SEGÚN EDAD
+========================================================= */
+function historiaEsAptaParaMi(h) {
+  // Si no es menor, ve todo
+  if (!edadUsuario || !edadUsuario.esMenor) return true;
+  // Si es menor, bloquear cualquier historia con advertencias
+  if (h.advertencias && h.advertencias.length > 0) return false;
+  return true;
+}
+
+function filtrarHistoriasPorEdad(historias) {
+  return historias.filter(historiaEsAptaParaMi);
 }
 
 /* =========================================================
@@ -284,6 +328,46 @@ async function eliminarCapituloSupabase(capituloId) {
 }
 
 /* =========================================================
+   PERFIL EN SUPABASE
+========================================================= */
+async function guardarPerfilSupabase(datos) {
+  // Intentar actualizar. Si no existe, insertar.
+  const { data: existe } = await supabaseClient
+    .from('profiles')
+    .select('id')
+    .eq('id', usuarioActual.id)
+    .single();
+
+  if (existe) {
+    const { error } = await supabaseClient
+      .from('profiles')
+      .update(datos)
+      .eq('id', usuarioActual.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabaseClient
+      .from('profiles')
+      .insert({ id: usuarioActual.id, ...datos });
+    if (error) throw error;
+  }
+}
+
+async function cargarPerfilSupabase(userId) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+    return data || null;
+  } catch (e) {
+    console.error('Error cargando perfil:', e);
+    return null;
+  }
+}
+
+/* =========================================================
    STORAGE: PORTADAS (bucket "Portadas")
 ========================================================= */
 async function subirPortadaSupabase(archivo, storyId) {
@@ -412,6 +496,11 @@ document.getElementById('btnDiagnostico').onclick = async () => {
   } catch (e) {
     toast('❌ Storage falló: ' + e.message, 'error', 6000);
   }
+
+  // Diagnóstico de edad
+  if (edadUsuario) {
+    toast(`📅 Tu edad: ${edadUsuario.anios} años (${edadUsuario.esMenor ? 'modo menor' : 'modo adulto'})`, 'info', 5000);
+  }
 };
 
 /* =========================================================
@@ -419,14 +508,31 @@ document.getElementById('btnDiagnostico').onclick = async () => {
 ========================================================= */
 document.getElementById('formRegistro').onsubmit = async e => {
   e.preventDefault();
+  const nombre = document.getElementById('regNombre').value.trim();
+  const apellido = document.getElementById('regApellido').value.trim();
+  const genero = document.getElementById('regGenero').value;
+  const fechaNacimiento = document.getElementById('regFechaNacimiento').value;
   const username = document.getElementById('regUsername').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
   const btn = document.getElementById('btnRegistroSubmit');
 
+  // Validaciones
+  if (!nombre) { toast('Falta el nombre', 'error'); return; }
+  if (!apellido) { toast('Falta el apellido', 'error'); return; }
+  if (!genero) { toast('Selecciona un género', 'error'); return; }
+  if (!fechaNacimiento) { toast('Falta la fecha de nacimiento', 'error'); return; }
   if (!username) { toast('Falta el nombre de usuario', 'error'); return; }
   if (!email) { toast('Falta el correo', 'error'); return; }
   if (password.length < 6) { toast('La contraseña debe tener al menos 6 caracteres', 'error'); return; }
+
+  // Validar edad mínima
+  const edad = calcularEdad(fechaNacimiento);
+  if (edad === null) { toast('Fecha de nacimiento inválida', 'error'); return; }
+  if (edad < 13) {
+    toast('Debes tener al menos 13 años para usar Aren.', 'error', 8000);
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'Creando cuenta...';
@@ -436,12 +542,37 @@ document.getElementById('formRegistro').onsubmit = async e => {
       email,
       password,
       options: {
-        data: { username, emoji: '👤' },
+        data: {
+          nombre,
+          apellido,
+          genero,
+          fecha_nacimiento: fechaNacimiento,
+          username,
+          emoji: '👤'
+        },
         emailRedirectTo: window.location.origin
       }
     });
 
     if (error) { mostrarErrorCompleto(error, 'Error al registrar'); return; }
+
+    // Guardar en la tabla profiles si ya tenemos session
+    if (data && data.user && data.session) {
+      try {
+        await guardarPerfilSupabase({
+          username,
+          nombre,
+          apellido,
+          genero,
+          fecha_nacimiento: fechaNacimiento,
+          bio: '',
+          emoji: '👤',
+          avatar_url: null
+        });
+      } catch (errPerfil) {
+        console.warn('No se pudo guardar el perfil completo aún:', errPerfil);
+      }
+    }
 
     const requiereConfirmacion = data && data.user && !data.session;
     if (requiereConfirmacion) toast('✅ ¡Cuenta creada! Revisa tu correo.', 'success', 8000);
@@ -503,6 +634,7 @@ document.getElementById('btnCerrarSesion').onclick = async () => {
     await supabaseClient.auth.signOut();
     usuarioActual = null;
     perfilActual = null;
+    edadUsuario = null;
     _historiasCache = [];
     for (const k in cacheImagenes) delete cacheImagenes[k];
     toast('Sesión cerrada', 'info');
@@ -518,36 +650,63 @@ document.getElementById('btnCerrarSesion').onclick = async () => {
 async function inicializarApp(user) {
   usuarioActual = user;
 
-  const clave = 'aren_perfil_' + user.id;
-  try {
-    const guardado = localStorage.getItem(clave);
-    if (guardado) perfilActual = JSON.parse(guardado);
-    else {
-      try {
-        const { data } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
-        if (data) perfilActual = data;
-        else throw new Error('sin datos');
-      } catch (e) {
-        perfilActual = {
-          username: (user.user_metadata && user.user_metadata.username) || user.email.split('@')[0] || 'Anónimo',
-          emoji: '👤', bio: '', avatar_url: null,
-        };
-      }
-    }
-  } catch (e) {
+  // Cargar perfil desde Supabase
+  let perfilSupabase = await cargarPerfilSupabase(user.id);
+
+  if (perfilSupabase) {
     perfilActual = {
-      username: (user.user_metadata && user.user_metadata.username) || user.email.split('@')[0] || 'Anónimo',
-      emoji: '👤', bio: '', avatar_url: null,
+      username: perfilSupabase.username || 'Anónimo',
+      nombre: perfilSupabase.nombre || '',
+      apellido: perfilSupabase.apellido || '',
+      genero: perfilSupabase.genero || '',
+      fecha_nacimiento: perfilSupabase.fecha_nacimiento || null,
+      bio: perfilSupabase.bio || '',
+      emoji: perfilSupabase.emoji || '👤',
+      avatar_url: perfilSupabase.avatar_url || null,
     };
+  } else {
+    // Fallback: usar metadata del auth
+    const meta = user.user_metadata || {};
+    perfilActual = {
+      username: meta.username || (user.email ? user.email.split('@')[0] : 'Anónimo'),
+      nombre: meta.nombre || '',
+      apellido: meta.apellido || '',
+      genero: meta.genero || '',
+      fecha_nacimiento: meta.fecha_nacimiento || null,
+      bio: '',
+      emoji: meta.emoji || '👤',
+      avatar_url: null,
+    };
+
+    // Intentar guardarlo en profiles (por si se registró antes de tener la tabla lista)
+    try {
+      await guardarPerfilSupabase({
+        username: perfilActual.username,
+        nombre: perfilActual.nombre,
+        apellido: perfilActual.apellido,
+        genero: perfilActual.genero,
+        fecha_nacimiento: perfilActual.fecha_nacimiento,
+        bio: '',
+        emoji: perfilActual.emoji,
+        avatar_url: null
+      });
+    } catch (e) {
+      console.warn('No se pudo crear perfil inicial:', e);
+    }
   }
+
+  // Calcular edad
+  actualizarEdadUsuario(perfilActual.fecha_nacimiento);
 
   actualizarAvatarCabecera();
 
   const drawerUser = document.getElementById('drawerUsuario');
   if (drawerUser) {
+    const edadTxt = edadUsuario ? ` · ${edadUsuario.anios} años` : '';
+    const modoTxt = edadUsuario ? (edadUsuario.esMenor ? ' · 👶 Menor' : ' · ✅ Adulto') : '';
     drawerUser.innerHTML = `
       <span class="nombre-drawer">${escapeHtml(perfilActual.username || 'Anónimo')}</span>
-      ${escapeHtml(user.email || '')}
+      ${escapeHtml(user.email || '')}${edadTxt}${modoTxt}
     `;
   }
 
@@ -573,14 +732,12 @@ function actualizarAvatarCabecera() {
 }
 
 /* =========================================================
-   PANTALLA COMPLETA — BLOQUE 4
-   Salir correctamente desde cualquier camino
+   PANTALLA COMPLETA
 ========================================================= */
 function salirDePantallaCompleta() {
   document.body.classList.remove('modo-pantalla-completa');
   const btnSalir = document.getElementById('btnSalirPantallaCompleta');
   if (btnSalir) btnSalir.style.display = 'none';
-  // Restaurar scroll por si acaso
   document.body.style.overflow = '';
 }
 
@@ -604,7 +761,6 @@ const vistas = {
 };
 
 async function mostrarVista(nombre) {
-  // Salir de pantalla completa al cambiar de vista
   if (nombre !== 'lector') {
     salirDePantallaCompleta();
   }
@@ -621,7 +777,6 @@ async function mostrarVista(nombre) {
     vistas[nombre].classList.add('activa');
   }
 
-  // Mostrar botón flotante solo en Inicio
   const btnFlotante = document.getElementById('btnPublicarFlotante');
   if (btnFlotante) {
     btnFlotante.style.display = (nombre === 'inicio') ? 'flex' : 'none';
@@ -825,7 +980,8 @@ async function renderizarHistorias(filtro = '') {
   await recargarHistorias();
 
   cont.innerHTML = '';
-  const historias = _historiasCache.filter(esVisible).filter(h => {
+  // Filtrar por visibilidad + edad + búsqueda
+  const historias = filtrarHistoriasPorEdad(_historiasCache.filter(esVisible)).filter(h => {
     if (!filtro) return true;
     const t = (h.titulo + ' ' + (h.autor || '') + ' ' + h.genero + ' ' + h.etiquetas.join(' ')).toLowerCase();
     return t.includes(filtro.toLowerCase());
@@ -858,7 +1014,8 @@ async function renderizarCatalogo() {
   await recargarHistorias();
 
   cont.innerHTML = '';
-  const historias = _historiasCache.filter(esVisible).filter(h => generoFiltro === 'Todos' || h.genero === generoFiltro);
+  const historias = filtrarHistoriasPorEdad(_historiasCache.filter(esVisible))
+    .filter(h => generoFiltro === 'Todos' || h.genero === generoFiltro);
   if (!historias.length) {
     cont.innerHTML = '<p class="mensaje-vacio">No hay historias en esta categoría.</p>';
     return;
@@ -871,7 +1028,8 @@ function renderizarBiblioteca() {
   const vacio = document.getElementById('bibliotecaVacia');
   cont.innerHTML = '';
   const ids = getBiblioteca();
-  const historias = _historiasCache.filter(h => ids.includes(h.id));
+  // Filtrar por edad también en biblioteca
+  const historias = filtrarHistoriasPorEdad(_historiasCache.filter(h => ids.includes(h.id)));
   if (!historias.length) vacio.style.display = 'block';
   else { vacio.style.display = 'none'; historias.forEach(h => cont.appendChild(crearTarjeta(h))); }
 }
@@ -884,6 +1042,7 @@ function renderizarHistorial() {
   const entradas = Object.entries(hist)
     .map(([id, datos]) => ({ historia: _historiasCache.find(h => h.id === id), datos }))
     .filter(e => e.historia)
+    .filter(e => historiaEsAptaParaMi(e.historia))
     .sort((a, b) => new Date(b.datos.fecha) - new Date(a.datos.fecha));
 
   if (!entradas.length) vacio.style.display = 'block';
@@ -1252,6 +1411,12 @@ async function abrirLector(id) {
     return mostrarVista('inicio');
   }
 
+  // BLOQUEO POR EDAD
+  if (!historiaEsAptaParaMi(h)) {
+    toast('🔞 Esta historia contiene contenido no apto para tu edad.', 'warn', 8000);
+    return mostrarVista('inicio');
+  }
+
   historiaActual = h;
 
   document.getElementById('detalleHistoria').style.display = 'block';
@@ -1407,7 +1572,7 @@ document.getElementById('btnSeguirAutor').onclick = () => {
 };
 
 /* =========================================================
-   ESTRELLAS — BLOQUE 4 (con animación pop)
+   ESTRELLAS
 ========================================================= */
 function renderizarEstrellas() {
   const cont = document.getElementById('estrellasValoracion');
@@ -1419,11 +1584,9 @@ function renderizarEstrellas() {
     btn.textContent = '★';
     btn.setAttribute('aria-label', `Valorar con ${i} estrella${i === 1 ? '' : 's'}`);
     btn.onclick = () => {
-      // Animación pop
       btn.classList.remove('pop');
       void btn.offsetWidth;
       btn.classList.add('pop');
-      // Feedback visual
       cont.querySelectorAll('.estrella').forEach((s, idx) => {
         s.classList.toggle('activa', idx < i);
       });
@@ -1622,7 +1785,7 @@ document.getElementById('formCapitulo').onsubmit = async e => {
 };
 
 /* =========================================================
-   LEER CAPÍTULO — BLOQUE 4 (fade mejorado)
+   LEER CAPÍTULO
 ========================================================= */
 let ttsActivo = false;
 
@@ -1661,9 +1824,8 @@ async function abrirCapitulo(idx) {
   document.getElementById('btnCapAnterior').style.display = idx > 0 ? 'inline-block' : 'none';
   document.getElementById('btnCapSiguiente').style.display = idx < historiaActual.capitulos.length - 1 ? 'inline-block' : 'none';
 
-  // Animación fade entre capítulos
   cont.classList.remove('fade-in-capitulo');
-  void cont.offsetWidth; // forzar reflow
+  void cont.offsetWidth;
   cont.classList.add('fade-in-capitulo');
 
   const hist = getHistorial();
@@ -1677,7 +1839,7 @@ async function abrirCapitulo(idx) {
 
 document.getElementById('btnVolverCapitulos').onclick = () => {
   detenerTTS();
-  salirDePantallaCompleta(); // Asegurar que se sale de pantalla completa
+  salirDePantallaCompleta();
   abrirLector(historiaActual.id);
 };
 document.getElementById('btnCapAnterior').onclick = () => abrirCapitulo(capituloActualIdx - 1);
@@ -1696,17 +1858,14 @@ document.getElementById('btnSepia').onclick = () => {
   toast(document.body.classList.contains('sepia') ? 'Modo sepia activado' : 'Modo sepia desactivado', 'info', 1500);
 };
 
-/* Entrar a pantalla completa */
 document.getElementById('btnPantallaCompleta').onclick = () => {
   document.body.classList.add('modo-pantalla-completa');
   document.getElementById('btnSalirPantallaCompleta').style.display = 'flex';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-/* Salir de pantalla completa con el botón flotante */
 document.getElementById('btnSalirPantallaCompleta').onclick = salirDePantallaCompleta;
 
-/* Salir de pantalla completa con el botón físico atrás del móvil */
 window.addEventListener('popstate', (e) => {
   if (document.body.classList.contains('modo-pantalla-completa')) {
     e.preventDefault();
@@ -1714,7 +1873,6 @@ window.addEventListener('popstate', (e) => {
     history.pushState(null, '', location.href);
   }
 });
-// Empujar un estado al historial para que "atrás" funcione
 if (typeof history !== 'undefined') {
   history.pushState(null, '', location.href);
 }
@@ -1832,8 +1990,16 @@ document.getElementById('formPerfil').onsubmit = async e => {
   perfilActual = { ...perfilActual, username, bio, emoji, avatar_url: fotoPerfilTemp || perfilActual.avatar_url || null };
 
   try {
-    const clave = 'aren_perfil_' + usuarioActual.id;
-    localStorage.setItem(clave, JSON.stringify(perfilActual));
+    await guardarPerfilSupabase({
+      username,
+      bio,
+      emoji,
+      avatar_url: perfilActual.avatar_url,
+      nombre: perfilActual.nombre || '',
+      apellido: perfilActual.apellido || '',
+      genero: perfilActual.genero || '',
+      fecha_nacimiento: perfilActual.fecha_nacimiento || null
+    });
 
     for (const h of _historiasCache) {
       if (h.user_id === usuarioActual.id) {
@@ -1847,9 +2013,11 @@ document.getElementById('formPerfil').onsubmit = async e => {
 
     const drawerUser = document.getElementById('drawerUsuario');
     if (drawerUser) {
+      const edadTxt = edadUsuario ? ` · ${edadUsuario.anios} años` : '';
+      const modoTxt = edadUsuario ? (edadUsuario.esMenor ? ' · 👶 Menor' : ' · ✅ Adulto') : '';
       drawerUser.innerHTML = `
         <span class="nombre-drawer">${escapeHtml(perfilActual.username)}</span>
-        ${escapeHtml(usuarioActual.email || '')}
+        ${escapeHtml(usuarioActual.email || '')}${edadTxt}${modoTxt}
       `;
     }
   } catch (err) { mostrarErrorCompleto(err, 'Error al guardar perfil'); }
@@ -1973,6 +2141,7 @@ async function iniciar() {
     if (event === 'SIGNED_OUT') {
       usuarioActual = null;
       perfilActual = null;
+      edadUsuario = null;
       _historiasCache = [];
       mostrarBienvenida();
     }
