@@ -12,9 +12,37 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let usuarioActual = null;
 let perfilActual = null;
 let _historiasCache = [];
-let edadUsuario = null; // { anios, esMenor }
+let edadUsuario = null;
 
 const EDAD_MINIMA = 13;
+
+/* =========================================================
+   LISTAS DE GÉNEROS Y SUBGÉNEROS
+========================================================= */
+const GENEROS_PRINCIPALES = [
+  'Romance', 'Fantasía', 'Ciencia Ficción', 'Misterio', 'Terror',
+  'Aventura', 'Drama', 'Poesía', 'Histórico', 'Juvenil',
+  'Fanfic', 'Humor', 'No ficción', 'Erótico', 'Espiritual',
+  'Superhéroes', 'Vampírico', 'Zombis', 'Steampunk', 'Mitología',
+  'Deportes', 'Música', 'Realeza', 'Distopía', 'Espías',
+  'Magia', 'Ángeles y Demonios', 'Sirenas', 'Viajes en el tiempo', 'Supervivencia'
+];
+
+const SUBGENEROS = [
+  'Acción', 'Comedia', 'Suspenso', 'Drama', 'Magia',
+  'Romance', 'Terror', 'Misterio', 'Aventura', 'Fantasía',
+  'Distopía', 'Post-apocalíptico', 'Sobrenatural', 'Psicológico', 'Histórico',
+  'Juvenil', 'Adulto', 'Familiar', 'Amistad', 'Venganza',
+  'Redención', 'Viaje', 'Guerra', 'Supervivencia', 'Academia',
+  'Criaturas', 'Poderes', 'Profecías', 'Secretos', 'Traición',
+  'Amor prohibido', 'Triángulo amoroso', 'Misterio escolar', 'Vidas pasadas', 'Reencarnación',
+  'Héroes'
+];
+
+const MAX_SUBGENEROS = 3;
+
+let generoSeleccionado = '';
+let subgenerosSeleccionados = [];
 
 /* =========================================================
    UTILIDADES
@@ -76,10 +104,7 @@ function actualizarEdadUsuario(fechaNacimiento) {
     edadUsuario = null;
     return;
   }
-  edadUsuario = {
-    anios: anios,
-    esMenor: anios < 18
-  };
+  edadUsuario = { anios: anios, esMenor: anios < 18 };
 }
 
 function formatearMiembroDesde(fechaISO) {
@@ -104,6 +129,89 @@ function historiaEsAptaParaMi(h) {
 
 function filtrarHistoriasPorEdad(historias) {
   return historias.filter(historiaEsAptaParaMi);
+}
+
+/* =========================================================
+   GRIDS DE GÉNEROS Y SUBGÉNEROS
+========================================================= */
+function renderizarGridGeneros() {
+  const cont = document.getElementById('gridGeneros');
+  if (!cont) return;
+  cont.innerHTML = '';
+  GENEROS_PRINCIPALES.forEach(g => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-genero' + (generoSeleccionado === g ? ' seleccionado' : '');
+    btn.textContent = g;
+    btn.onclick = () => {
+      generoSeleccionado = (generoSeleccionado === g) ? '' : g;
+      document.getElementById('genero').value = generoSeleccionado;
+      renderizarGridGeneros();
+      actualizarContadorGenero();
+    };
+    cont.appendChild(btn);
+  });
+}
+
+function actualizarContadorGenero() {
+  const cont = document.getElementById('contadorGenero');
+  if (!cont) return;
+  if (generoSeleccionado) {
+    cont.textContent = '✓ ' + generoSeleccionado;
+    cont.classList.add('completo');
+  } else {
+    cont.textContent = '(elige 1)';
+    cont.classList.remove('completo');
+  }
+}
+
+function renderizarGridSubgeneros() {
+  const cont = document.getElementById('gridSubgeneros');
+  if (!cont) return;
+  cont.innerHTML = '';
+  const lleno = subgenerosSeleccionados.length >= MAX_SUBGENEROS;
+  SUBGENEROS.forEach(s => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    const seleccionado = subgenerosSeleccionados.includes(s);
+    btn.className = 'btn-genero' + (seleccionado ? ' seleccionado' : '');
+    if (!seleccionado && lleno) btn.classList.add('deshabilitado');
+    btn.textContent = s;
+    btn.onclick = () => {
+      if (seleccionado) {
+        subgenerosSeleccionados = subgenerosSeleccionados.filter(x => x !== s);
+      } else {
+        if (subgenerosSeleccionados.length >= MAX_SUBGENEROS) {
+          toast(`Máximo ${MAX_SUBGENEROS} subgéneros`, 'warn', 2000);
+          return;
+        }
+        subgenerosSeleccionados.push(s);
+      }
+      renderizarGridSubgeneros();
+      actualizarContadorSubgeneros();
+    };
+    cont.appendChild(btn);
+  });
+}
+
+function actualizarContadorSubgeneros() {
+  const cont = document.getElementById('contadorSubgeneros');
+  if (!cont) return;
+  const n = subgenerosSeleccionados.length;
+  cont.textContent = `(${n}/${MAX_SUBGENEROS})`;
+  if (n >= MAX_SUBGENEROS) cont.classList.add('completo');
+  else cont.classList.remove('completo');
+}
+
+function resetearGrids() {
+  generoSeleccionado = '';
+  subgenerosSeleccionados = [];
+  const inputGen = document.getElementById('genero');
+  if (inputGen) inputGen.value = '';
+  renderizarGridGeneros();
+  renderizarGridSubgeneros();
+  actualizarContadorGenero();
+  actualizarContadorSubgeneros();
 }
 
 /* =========================================================
@@ -202,7 +310,7 @@ function historiaDeSupabase(s) {
     autorFoto: s.author_photo_url || null,
     sinopsis: s.synopsis || '',
     genero: s.genre || '',
-    subgenero: s.subgenre || '',
+    subgenero: Array.isArray(s.subgenre) ? s.subgenre : (s.subgenre ? [s.subgenre] : []),
     estado: s.status || 'En curso',
     etiquetas: s.tags || [],
     advertencias: s.warnings || [],
@@ -236,7 +344,7 @@ function historiaParaSupabase(h, incluirId = false) {
     p_author_photo_url: h.autorFoto || null,
     p_synopsis: h.sinopsis || '',
     p_genre: h.genero || '',
-    p_subgenre: h.subgenero || '',
+    p_subgenre: h.subgenero || [],
     p_status: h.estado || 'En curso',
     p_tags: h.etiquetas || [],
     p_warnings: h.advertencias || [],
@@ -870,42 +978,6 @@ document.getElementById('btnPublicarFlotante').onclick = () => {
 };
 
 /* =========================================================
-   GÉNEROS
-========================================================= */
-const GENEROS = {
-  'Romance':           ['Contemporáneo', 'Histórico', 'Juvenil', 'Paranormal', 'Adulto'],
-  'Fantasía':          ['Épica', 'Urbana', 'Oscura', 'Romántica', 'Juvenil'],
-  'Ciencia Ficción':   ['Distopía', 'Espacial', 'Cyberpunk', 'Post-apocalíptico', 'Viaje en el tiempo'],
-  'Misterio':          ['Policial', 'Noir', 'Suspenso', 'Thriller psicológico', 'Enigma'],
-  'Terror':            ['Gótico', 'Sobrenatural', 'Psicológico', 'Slasher', 'Cósmico'],
-  'Aventura':          ['Supervivencia', 'Exploración', 'Piratas', 'Western', 'Viajes'],
-  'Drama':             ['Familiar', 'Juvenil', 'Social', 'Médico', 'Escolar'],
-  'Poesía':            ['Lírica', 'Épica', 'Verso libre', 'Haiku', 'Prosa poética'],
-  'Histórico':         ['Medieval', 'Victoriano', 'Bélico', 'Antiguo', 'Revolución'],
-  'Juvenil':           ['Adolescente', 'Coming of age', 'Colegio', 'Amistad', 'Primer amor'],
-  'Fanfic':            ['Anime', 'Videojuegos', 'Series', 'Películas', 'Libros'],
-  'Humor':             ['Satírico', 'Absurdo', 'Comedia romántica', 'Parodia', 'Stand-up'],
-  'No ficción':        ['Ensayo', 'Biografía', 'Autoayuda', 'Memorias', 'Divulgación'],
-  'Erótico':           ['Romance', 'Contemporáneo', 'Suspenso', 'Fantástico', 'Drama'],
-  'Espiritual':        ['Inspiracional', 'Religioso', 'Filosófico', 'Meditación', 'Místico'],
-  'Superhéroes':       ['Originales', 'Poderes', 'Vigilantes', 'Academia', 'Oscuro'],
-  'Vampírico':         ['Romance', 'Oscuro', 'Juvenil', 'Histórico', 'Urbano'],
-  'Zombis':            ['Apocalipsis', 'Supervivencia', 'Comedia', 'Drama', 'Acción'],
-  'Steampunk':         ['Victoriano', 'Fantástico', 'Aventura', 'Misterio', 'Romance'],
-  'Mitología':         ['Griega', 'Nórdica', 'Egipcia', 'Japonesa', 'Latinoamericana'],
-  'Deportes':          ['Fútbol', 'Baloncesto', 'Atletismo', 'Artes marciales', 'Boxeo'],
-  'Música':            ['Rock', 'Pop', 'Clásica', 'Urbana', 'Romance'],
-  'Realeza':           ['Fantasía', 'Histórico', 'Romance', 'Drama', 'Contemporáneo'],
-  'Distopía':          ['Política', 'Científica', 'Juvenil', 'Social', 'Post-apocalíptica'],
-  'Espías':            ['Thriller', 'Acción', 'Político', 'Romance', 'Histórico'],
-  'Magia':             ['Academia', 'Oscura', 'Elemental', 'Antigua', 'Prohibida'],
-  'Ángeles y Demonios':['Urbano', 'Romance', 'Épico', 'Oscuro', 'Juvenil'],
-  'Sirenas':           ['Fantasía', 'Romance', 'Aventura', 'Oscuro', 'Juvenil'],
-  'Viajes en el tiempo':['Paradoja', 'Histórico', 'Futurista', 'Romance', 'Aventura'],
-  'Supervivencia':     ['Isla desierta', 'Post-apocalíptico', 'Selva', 'Montaña', 'Espacial'],
-};
-
-/* =========================================================
    UTILIDADES CONTENIDO
 ========================================================= */
 const contarPalabras = html => {
@@ -998,12 +1070,15 @@ function crearTarjeta(h) {
     badgeEspecial = `<span class="badge-programada">🕒 ${f.toLocaleDateString()}</span>`;
   }
 
+  const subgeneros = (h.subgenero || []).slice(0, 3).map(s => `<span class="etiqueta-sub">${escapeHtml(s)}</span>`).join('');
+
   const infoDiv = document.createElement('div');
   infoDiv.className = 'tarjeta-info';
   infoDiv.innerHTML = `
     <h3>${escapeHtml(h.titulo)}</h3>
     <p class="autor-mini">por ${escapeHtml(autor)}${esMia ? ' <span style="color:#43a047;">(tú)</span>' : ''}</p>
-    <p>${escapeHtml(h.genero)}${h.subgenero ? ' · ' + escapeHtml(h.subgenero) : ''}</p>
+    <p>${escapeHtml(h.genero)}</p>
+    ${subgeneros ? `<div class="subgeneros-chips">${subgeneros}</div>` : ''}
     <p>${h.capitulos.length} cap. · ${palabras} palabras · ${minutosLectura(palabras)} min</p>
     ${prom > 0 ? `<p class="estrellitas">${estrellitas(prom)} ${prom}</p>` : ''}
     ${badgeEspecial}
@@ -1046,7 +1121,7 @@ let generoFiltro = 'Todos';
 async function renderizarCatalogo() {
   const filtros = document.getElementById('filtrosGenero');
   if (!filtros.dataset.listo) {
-    ['Todos', ...Object.keys(GENEROS)].forEach(g => {
+    ['Todos', ...GENEROS_PRINCIPALES].forEach(g => {
       const b = document.createElement('button');
       b.textContent = g;
       b.onclick = () => { generoFiltro = g; renderizarCatalogo(); };
@@ -1256,20 +1331,6 @@ document.getElementById('portada').onchange = async e => {
   }
 };
 
-const selGenero = document.getElementById('genero');
-const selSubgenero = document.getElementById('subgenero');
-Object.keys(GENEROS).forEach(g => {
-  const o = document.createElement('option'); o.textContent = g; selGenero.appendChild(o);
-});
-function actualizarSubgeneros() {
-  selSubgenero.innerHTML = '';
-  (GENEROS[selGenero.value] || []).forEach(s => {
-    const o = document.createElement('option'); o.textContent = s; selSubgenero.appendChild(o);
-  });
-}
-selGenero.onchange = actualizarSubgeneros;
-actualizarSubgeneros();
-
 document.getElementById('etiquetas').oninput = e => {
   const tags = e.target.value.split(',').map(s => s.trim()).filter(Boolean).slice(0, 10);
   document.getElementById('etiquetasPreview').innerHTML =
@@ -1311,8 +1372,7 @@ function prepararNuevaHistoria() {
   document.getElementById('chkBorrador').checked = false;
   document.getElementById('bloqueProgramar').style.display = 'block';
   marcarAdvertencias([]);
-  selGenero.selectedIndex = 0;
-  actualizarSubgeneros();
+  resetearGrids();
 }
 
 function prepararEdicionHistoria(id) {
@@ -1327,9 +1387,6 @@ function prepararEdicionHistoria(id) {
   document.getElementById('autor').value = h.autor || '';
   document.getElementById('dedicatoria').value = h.dedicatoria || '';
   document.getElementById('sinopsis').value = h.sinopsis;
-  document.getElementById('genero').value = h.genero;
-  actualizarSubgeneros();
-  if (h.subgenero) document.getElementById('subgenero').value = h.subgenero;
   document.getElementById('estado').value = h.estado || 'En curso';
   document.getElementById('etiquetas').value = h.etiquetas.join(', ');
   document.getElementById('etiquetas').oninput({ target: document.getElementById('etiquetas') });
@@ -1341,6 +1398,16 @@ function prepararEdicionHistoria(id) {
   const prev = document.getElementById('previewPortada');
   prev.innerHTML = '';
   if (h.portadaUrl) prev.innerHTML = `<img src="${h.portadaUrl}">`;
+
+  // Cargar género y subgéneros en el grid
+  generoSeleccionado = h.genero || '';
+  document.getElementById('genero').value = generoSeleccionado;
+  subgenerosSeleccionados = Array.isArray(h.subgenero) ? h.subgenero.slice(0, MAX_SUBGENEROS) : [];
+  renderizarGridGeneros();
+  renderizarGridSubgeneros();
+  actualizarContadorGenero();
+  actualizarContadorSubgeneros();
+
   mostrarVista('publicar');
   activarTabPublicar('formulario');
 }
@@ -1351,8 +1418,8 @@ document.getElementById('formHistoria').onsubmit = async e => {
   const autor = document.getElementById('autor').value.trim();
   const dedicatoria = document.getElementById('dedicatoria').value.trim();
   const sinopsis = document.getElementById('sinopsis').value.trim();
-  const genero = selGenero.value;
-  const subgenero = selSubgenero.value;
+  const genero = generoSeleccionado;
+  const subgenero = subgenerosSeleccionados.slice();
   const estado = document.getElementById('estado').value;
   const etiquetasRaw = document.getElementById('etiquetas').value.split(',').map(s => s.trim()).filter(Boolean);
   const advertencias = leerAdvertenciasSeleccionadas();
@@ -1364,6 +1431,8 @@ document.getElementById('formHistoria').onsubmit = async e => {
   if (titulo.length < 3) { toast('El título debe tener al menos 3 caracteres', 'error'); return; }
   if (!sinopsis) { toast('Falta la sinopsis', 'error'); return; }
   if (sinopsis.length < 10) { toast('La sinopsis es muy corta', 'error'); return; }
+  if (!genero) { toast('Elige un género principal', 'error'); return; }
+  if (subgenero.length === 0) { toast('Elige al menos 1 subgénero', 'error'); return; }
 
   const perfil = perfilActual || { username: 'Anónimo' };
   const btn = document.getElementById('btnGuardarHistoria');
@@ -1420,6 +1489,7 @@ document.getElementById('formHistoria').onsubmit = async e => {
     document.getElementById('infoPortada').textContent = '';
     document.getElementById('bloqueProgramar').style.display = 'block';
     marcarAdvertencias([]);
+    resetearGrids();
 
     await recargarHistorias();
     mostrarVista('publicar');
@@ -1474,8 +1544,10 @@ async function abrirLector(id) {
 
   document.getElementById('lectorTitulo').textContent = h.titulo;
   document.getElementById('lectorAutor').textContent = `por ${h.autor || 'Anónimo'}`;
+
+  const subgenerosTxt = (h.subgenero && h.subgenero.length) ? ' · ' + h.subgenero.join(', ') : '';
   document.getElementById('lectorMeta').innerHTML =
-    `${escapeHtml(h.genero)}${h.subgenero ? ' · ' + escapeHtml(h.subgenero) : ''} · ${h.estado || 'En curso'} · ${h.capitulos.length} capítulos`;
+    `${escapeHtml(h.genero)}${escapeHtml(subgenerosTxt)} · ${h.estado || 'En curso'} · ${h.capitulos.length} capítulos`;
 
   const contAdv = document.getElementById('lectorAdvertencias');
   contAdv.innerHTML = '';
@@ -2066,7 +2138,6 @@ document.getElementById('formPerfil').onsubmit = async e => {
   const nombre = document.getElementById('perfilNombreReal').value.trim();
   const apellido = document.getElementById('perfilApellido').value.trim();
   const genero = document.getElementById('perfilGenero').value;
-  // Fecha de nacimiento NO se puede cambiar
   const username = document.getElementById('perfilNombre').value.trim() || 'Anónimo';
   const bio = document.getElementById('perfilBio').value.trim();
   const emoji = document.getElementById('perfilEmoji').value.trim() || '👤';
@@ -2087,7 +2158,6 @@ document.getElementById('formPerfil').onsubmit = async e => {
       bio,
       emoji,
       avatar_url: perfilActual.avatar_url
-      // fecha_nacimiento NO se envía: no se puede cambiar desde el perfil
     });
 
     for (const h of _historiasCache) {
@@ -2202,6 +2272,12 @@ async function iniciar() {
   crearPaleta();
   aplicarTemaYColor();
   aplicarLectura();
+
+  // Inicializar grids aunque no haya sesión (por si acaso)
+  renderizarGridGeneros();
+  renderizarGridSubgeneros();
+  actualizarContadorGenero();
+  actualizarContadorSubgeneros();
 
   try {
     const { data: { session } } = await supabaseClient.auth.getSession();
