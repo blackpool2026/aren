@@ -75,6 +75,7 @@
         <label>Fecha de nacimiento
           <input type="date" id="regFechaNacimiento" required>
         </label>
+        <p id="regErrorEdad" class="error-edad" style="display:none;"></p>
 
         <label>Nombre de usuario (público)
           <input type="text" id="regUsername" required maxlength="30" placeholder="Tu nombre de autor">
@@ -417,31 +418,83 @@
 
     <main id="vistaPerfil" class="vista" style="display:none;">
       <h2>Mi perfil</h2>
+
+      <!-- Cabecera del perfil con avatar -->
       <div class="perfil-card">
         <div id="perfilAvatar" class="perfil-avatar">👤</div>
-        <form id="formPerfil" class="formulario" novalidate>
-
-          <label for="perfilFoto" class="btn-subir-foto">
-            <span class="btn-subir-icono">+</span>
-            <span class="btn-subir-texto">AÑADIR</span>
-            <span class="btn-subir-limite">Máximo (3 MB)</span>
-          </label>
-          <input type="file" id="perfilFoto" accept="image/png, image/jpeg" class="input-oculto">
-
-          <label>Emoji alternativo (si no hay foto)
-            <input type="text" id="perfilEmoji" maxlength="4" placeholder="👤">
-          </label>
-          <label>Nombre de usuario
-            <input type="text" id="perfilNombre" maxlength="30" placeholder="Anónimo">
-          </label>
-          <label>Biografía
-            <textarea id="perfilBio" maxlength="200" rows="3" placeholder="Cuéntanos sobre ti..."></textarea>
-          </label>
-          <button type="button" class="btn-secundario" id="btnQuitarFoto" style="display:none;">Quitar foto</button>
-          <button type="submit" class="btn-primario">Guardar perfil</button>
-        </form>
+        <div class="perfil-header-info">
+          <h3 id="perfilHeaderNombre">Anónimo</h3>
+          <p id="perfilHeaderUsername" class="perfil-header-username">@anonimo</p>
+          <span id="perfilHeaderModo" class="perfil-badge">—</span>
+          <p id="perfilHeaderMiembro" class="perfil-header-miembro"></p>
+        </div>
       </div>
-      <h3 class="subtitulo">Mis historias</h3>
+
+      <!-- Datos personales (privados) -->
+      <h3 class="subtitulo">👤 Datos personales</h3>
+      <form id="formPerfil" class="formulario" novalidate>
+
+        <label for="perfilFoto" class="btn-subir-foto">
+          <span class="btn-subir-icono">+</span>
+          <span class="btn-subir-texto">CAMBIAR FOTO</span>
+          <span class="btn-subir-limite">Máximo (3 MB)</span>
+        </label>
+        <input type="file" id="perfilFoto" accept="image/png, image/jpeg" class="input-oculto">
+
+        <label>Nombre
+          <input type="text" id="perfilNombreReal" maxlength="40" placeholder="Tu nombre">
+        </label>
+
+        <label>Apellido
+          <input type="text" id="perfilApellido" maxlength="40" placeholder="Tu apellido">
+        </label>
+
+        <label>Género
+          <select id="perfilGenero">
+            <option value="">Sin especificar</option>
+            <option value="masculino">Masculino</option>
+            <option value="femenino">Femenino</option>
+          </select>
+        </label>
+
+        <label>Fecha de nacimiento
+          <input type="date" id="perfilFechaNacimiento">
+        </label>
+
+        <div class="perfil-info-lectura">
+          <div class="perfil-info-fila">
+            <span class="perfil-info-label">Edad:</span>
+            <span class="perfil-info-valor" id="perfilEdadMostrada">—</span>
+          </div>
+          <div class="perfil-info-fila">
+            <span class="perfil-info-label">Modo:</span>
+            <span class="perfil-info-valor" id="perfilModoMostrado">—</span>
+          </div>
+          <div class="perfil-info-fila">
+            <span class="perfil-info-label">Miembro desde:</span>
+            <span class="perfil-info-valor" id="perfilMiembroDesdeMostrado">—</span>
+          </div>
+        </div>
+
+        <h3 class="subtitulo">🌐 Datos públicos</h3>
+
+        <label>Nombre de usuario (público)
+          <input type="text" id="perfilNombre" maxlength="30" placeholder="Anónimo">
+        </label>
+
+        <label>Emoji alternativo (si no hay foto)
+          <input type="text" id="perfilEmoji" maxlength="4" placeholder="👤">
+        </label>
+
+        <label>Biografía
+          <textarea id="perfilBio" maxlength="200" rows="3" placeholder="Cuéntanos sobre ti..."></textarea>
+        </label>
+
+        <button type="button" class="btn-secundario" id="btnQuitarFoto" style="display:none;">Quitar foto</button>
+        <button type="submit" class="btn-primario">Guardar perfil</button>
+      </form>
+
+      <h3 class="subtitulo">📚 Mis historias</h3>
       <div id="misHistorias" class="grid-historias"></div>
     </main>
 
