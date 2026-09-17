@@ -68,7 +68,6 @@ body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
   align-items: center;
   justify-content: center;
   padding: 24px;
-  /* Degradado VERTICAL por defecto (móvil) */
   background: linear-gradient(
     180deg,
     #001a4d 0%,
@@ -79,7 +78,6 @@ body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
   background-attachment: fixed;
 }
 
-/* Degradado HORIZONTAL en pantallas grandes (PC/tablet) */
 @media (min-width: 768px) {
   .vista-auth {
     background: linear-gradient(
@@ -119,12 +117,17 @@ body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
   font-weight: 800;
   text-align: center;
   letter-spacing: 2px;
-  background: linear-gradient(180deg, #ffffff 0%, #f0f4fa 100%);
+  background: linear-gradient(
+    180deg,
+    #42a5f5 0%,
+    #1976d2 50%,
+    #0d47a1 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   margin-bottom: 8px;
-  text-shadow: 0 2px 12px rgba(255,255,255,.15);
+  text-shadow: 0 2px 8px rgba(25,118,210,.25);
 }
 
 .auth-lema {
