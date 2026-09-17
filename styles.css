@@ -23,6 +23,12 @@ body {
   padding-bottom: 40px;
   transition: background .25s, color .25s;
   min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 /* ============ ACENTOS ============ */
@@ -221,9 +227,7 @@ body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
 }
 
 /* ============ MENÚ COLAPSABLE ============ */
-.drawer-grupo {
-  border: none;
-}
+.drawer-grupo { border: none; }
 .drawer-grupo > summary {
   list-style: none;
   cursor: pointer;
@@ -245,12 +249,8 @@ body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
   color: var(--color-meta);
   transition: transform .2s;
 }
-.drawer-grupo[open] > summary::after {
-  transform: rotate(180deg);
-}
-.drawer-grupo > summary:active {
-  color: var(--color-primario);
-}
+.drawer-grupo[open] > summary::after { transform: rotate(180deg); }
+.drawer-grupo > summary:active { color: var(--color-primario); }
 .drawer-grupo > button {
   background: none; border: none; text-align: left;
   padding: 12px 32px; font-size: .95rem; color: var(--color-texto);
@@ -261,13 +261,6 @@ body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
   background: rgba(25,118,210,.12); color: var(--color-primario);
 }
 
-.drawer-seccion {
-  padding: 14px 22px 6px;
-  font-size: .72rem; font-weight: 700;
-  color: var(--color-meta);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-}
 .drawer-separador {
   height: 1px;
   background: var(--color-borde);
@@ -333,21 +326,17 @@ body.sepia .header { background: linear-gradient(135deg, #b8860b, #8b6508); }
   flex-shrink: 0;
   transition: background .15s, color .15s;
 }
-
 .tab-btn.activo {
   background: var(--color-primario);
   color: white;
   border-color: var(--color-primario);
 }
-
 .tab-btn.tab-nueva {
   background: #e8f5e9;
   color: #2e7d32;
   border-color: #a5d6a7;
 }
-
 .tab-btn.tab-nueva:active { background: #c8e6c9; }
-
 .panel-tab { animation: fadeInAuth .2s ease; }
 
 /* ============ BUSCADOR ============ */
@@ -497,7 +486,11 @@ body.modo-oscuro .advertencias-mostradas .aviso { background: #4a1a1a; color: #f
 .proximamente h3 { font-size: 1.3rem; margin-bottom: 10px; color: var(--color-primario); }
 .proximamente p { color: var(--color-meta); line-height: 1.6; max-width: 400px; margin: 0 auto; }
 
-/* ============ LECTOR ============ */
+/* =========================================================
+   LECTOR — BLOQUE 4
+========================================================= */
+
+/* Contenido del capítulo: mejora móvil */
 .contenido-lectura {
   font-size: var(--lectura-tamano);
   font-family: var(--lectura-familia);
@@ -505,46 +498,80 @@ body.modo-oscuro .advertencias-mostradas .aviso { background: #4a1a1a; color: #f
   max-width: var(--lectura-ancho);
   margin: 20px auto;
   word-wrap: break-word;
+  overflow-wrap: break-word;
   text-align: justify;
   hyphens: auto;
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
+  padding: 0 4px;
 }
-.contenido-lectura h2, .contenido-lectura h3 { margin: 16px 0 10px; }
+
+.contenido-lectura h2,
+.contenido-lectura h3 { margin: 22px 0 12px; line-height: 1.3; }
 .contenido-lectura p { margin-bottom: 1em; }
-.contenido-lectura ul, .contenido-lectura ol { margin: 10px 0 10px 26px; }
+.contenido-lectura ul,
+.contenido-lectura ol { margin: 10px 0 14px 26px; }
+.contenido-lectura li { margin-bottom: .3em; }
 .contenido-lectura blockquote {
   border-left: 4px solid var(--color-primario);
-  padding-left: 14px; margin: 14px 0; font-style: italic;
+  padding-left: 14px; margin: 16px 0; font-style: italic;
   color: var(--color-meta);
 }
-.contenido-lectura hr { border: none; border-top: 1px solid var(--color-borde); margin: 20px 0; }
+.contenido-lectura hr {
+  border: none; border-top: 1px solid var(--color-borde);
+  margin: 24px 0;
+}
 .contenido-lectura img {
   max-width: 100%; height: auto; border-radius: 10px;
   margin: 16px auto; display: block;
   box-shadow: 0 2px 8px rgba(0,0,0,.1);
 }
 
-/* ============ ANIMACIÓN DE CAPÍTULOS ============ */
-@keyframes fadeCapitulo {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
+/* Mejora móvil específica */
+@media (max-width: 500px) {
+  .vista { padding: 12px; }
+  .contenido-lectura {
+    padding: 0 2px;
+    margin: 14px auto;
   }
-  to {
+  .lectura-controles {
+    padding: 6px;
+    gap: 4px;
+  }
+  .lectura-controles .btn-secundario {
+    padding: 7px 10px;
+    font-size: .8rem;
+  }
+}
+
+/* Animación fade entre capítulos — mejorada */
+@keyframes fadeCapitulo {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  60% {
+    opacity: 0.85;
+  }
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
 .fade-in-capitulo {
-  animation: fadeCapitulo .4s ease-out;
+  animation: fadeCapitulo .45s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
+/* Controles de lectura */
 .lectura-controles {
   display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0;
   padding: 8px; background: var(--color-tarjeta);
   border-radius: 12px; border: 1px solid var(--color-borde);
 }
-.lectura-controles .btn-secundario { margin: 0; padding: 8px 12px; font-size: .85rem; }
+.lectura-controles .btn-secundario {
+  margin: 0; padding: 8px 12px; font-size: .85rem;
+}
 .lectura-controles .btn-secundario.tts-activo {
   background: var(--color-primario) !important;
   color: white !important;
@@ -555,7 +582,9 @@ body.modo-oscuro .advertencias-mostradas .aviso { background: #4a1a1a; color: #f
   width: 100%; max-width: 220px; border-radius: 12px; margin-bottom: 14px;
   display: block;
 }
-.acciones-historia { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.acciones-historia {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0;
+}
 
 /* ============ DEDICATORIA ============ */
 .dedicatoria {
@@ -584,7 +613,11 @@ body.modo-oscuro .advertencias-mostradas .aviso { background: #4a1a1a; color: #f
   text-transform: uppercase; letter-spacing: 1px;
 }
 
-/* ============ PANTALLA COMPLETA ============ */
+/* =========================================================
+   PANTALLA COMPLETA — BLOQUE 4 (rediseñada)
+========================================================= */
+
+/* Ocultar elementos en pantalla completa */
 body.modo-pantalla-completa .header,
 body.modo-pantalla-completa .drawer,
 body.modo-pantalla-completa .drawer-overlay,
@@ -593,33 +626,85 @@ body.modo-pantalla-completa .lectura-controles,
 body.modo-pantalla-completa .nav-capitulos,
 body.modo-pantalla-completa #listaComentarios,
 body.modo-pantalla-completa #formComentario,
+body.modo-pantalla-completa #metaCapitulo,
+body.modo-pantalla-completa #tituloCapitulo,
 body.modo-pantalla-completa .subtitulo { display: none !important; }
-body.modo-pantalla-completa .vista { padding: 60px 20px 40px; max-width: 100%; }
-body.modo-pantalla-completa .contenido-lectura { margin: 20px auto; }
 
+body.modo-pantalla-completa .vista {
+  padding: 40px 20px 60px;
+  max-width: 100%;
+}
+body.modo-pantalla-completa .contenido-lectura {
+  margin: 20px auto;
+}
+
+/* Botón flotante de salir pantalla completa — rediseñado */
 .salir-pantalla-completa {
-  position: fixed; top: 12px; right: 12px; z-index: 1000;
-  width: 44px; height: 44px; border-radius: 50%;
-  background: rgba(0,0,0,.5); color: white; border: none;
-  font-size: 1.2rem; cursor: pointer;
-  opacity: .35; transition: opacity .25s, background .25s;
-  display: flex; align-items: center; justify-content: center;
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.55);
+  color: white;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity .2s, background .2s, transform .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
 .salir-pantalla-completa:hover,
-.salir-pantalla-completa:active { opacity: 1; background: rgba(0,0,0,.8); }
+.salir-pantalla-completa:active {
+  opacity: 1;
+  background: rgba(0,0,0,.85);
+  transform: scale(1.05);
+}
 
-/* ============ VALORACIÓN ============ */
-.valoracion { display: flex; align-items: center; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
-.estrellas { display: flex; gap: 4px; }
+/* =========================================================
+   VALORACIÓN (estrellas) — BLOQUE 4
+========================================================= */
+.valoracion {
+  display: flex; align-items: center; gap: 10px; margin: 14px 0; flex-wrap: wrap;
+}
+.estrellas { display: flex; gap: 6px; }
 .estrella {
-  font-size: 1.7rem; cursor: pointer; color: #d0d0d0;
-  background: none; border: none; padding: 0;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #d8d8d8;
+  background: none;
+  border: none;
+  padding: 0;
   line-height: 1;
-  transition: transform .12s, color .12s;
+  transition: transform .15s ease, color .15s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 .estrella:hover,
-.estrella:active { transform: scale(1.15); }
-.estrella.activa { color: #f5a623; }
+.estrella:active {
+  transform: scale(1.2);
+  color: #f5a623;
+}
+.estrella.activa {
+  color: #f5a623;
+  text-shadow: 0 0 8px rgba(245,166,35,.4);
+}
+.estrella.pop {
+  animation: estrellaPop .3s ease;
+}
+@keyframes estrellaPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
 .promedio { font-size: .85rem; color: var(--color-meta); }
 
 /* ============ CAPÍTULOS ============ */
@@ -642,7 +727,9 @@ body.modo-pantalla-completa .contenido-lectura { margin: 20px auto; }
   color: var(--color-meta); margin: 0 2px;
 }
 .btn-mover:disabled { opacity: .3; cursor: not-allowed; }
-.nav-capitulos { display: flex; justify-content: space-between; margin: 20px 0; }
+.nav-capitulos {
+  display: flex; justify-content: space-between; margin: 20px 0; gap: 10px;
+}
 
 /* ============ COMENTARIOS ============ */
 .lista-comentarios { margin-bottom: 14px; }
