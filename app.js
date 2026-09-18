@@ -2,7 +2,6 @@
    AREN — App con multiusuario real (Supabase)
 ========================================================= */
 
-/* ---------- CONFIGURACIÓN SUPABASE ---------- */
 const SUPABASE_URL = 'https://kimchxupqqxnjkmssbtp.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbWNoeHVwcXF4bmprbXNzYnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzMzM1MzIsImV4cCI6MjEwNDkwOTUzMn0.nus6tR4eaeVrQNjG86epuABUS7f97QgRm7vLnZ58TXI';
 
@@ -83,7 +82,7 @@ function mostrarErrorCompleto(err, contexto = '') {
 }
 
 /* =========================================================
-   EDAD Y FORMATO DE FECHAS
+   EDAD Y FECHAS
 ========================================================= */
 function calcularEdad(fechaNacimiento) {
   if (!fechaNacimiento) return null;
@@ -213,6 +212,142 @@ function resetearGrids() {
   actualizarContadorGenero();
   actualizarContadorSubgeneros();
 }
+
+/* =========================================================
+   CARRUSEL TOP 5 MÁS RECIENTES
+========================================================= */
+let carruselIdx = 0;
+let carruselTimer = null;
+let carruselHistorias = [];
+let carruselPausado = false;
+
+function iniciarCarrusel(historias) {
+  const track = document.getElementById('carruselTrack');
+  const dots = document.getElementById('carruselDots');
+  const container = document.getElementById('carruselTop');
+  if (!track || !dots || !container) return;
+
+  // Detener el anterior
+  detenerCarrusel();
+
+  // Tomar las 5 más recientes
+  carruselHistorias = historias.slice(0, 5);
+  if (!carruselHistorias.length) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'block';
+
+  // Renderizar slides
+  track.innerHTML = '';
+  carruselHistorias.forEach(h => {
+    const slide = document.createElement('div');
+    slide.className = 'carrusel-slide';
+    const subgeneros = (h.subgenero || []).slice(0, 3).map(s => `<span class="etiqueta-sub">${escapeHtml(s)}</span>`).join('');
+    slide.innerHTML = `
+      <div class="carrusel-slide-portada">
+        ${h.portadaUrl ? `<img src="${h.portadaUrl}" alt="">` : '📖'}
+      </div>
+      <div class="carrusel-slide-info">
+        <h3>${escapeHtml(h.titulo)}</h3>
+        <p class="autor-mini">por ${escapeHtml(h.autor || 'Anónimo')}</p>
+        <p class="genero-mini">${escapeHtml(h.genero)}${h.subgenero && h.subgenero.length ? ' · ' + h.subgenero.slice(0, 2).join(', ') : ''}</p>
+        ${h.sinopsis ? `<p class="sinopsis-mini">${escapeHtml(h.sinopsis)}</p>` : ''}
+      </div>
+    `;
+    slide.onclick = () => abrirLector(h.id);
+    track.appendChild(slide);
+  });
+
+  // Renderizar dots
+  dots.innerHTML = '';
+  carruselHistorias.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'carrusel-dot' + (i === 0 ? ' activo' : '');
+    dot.setAttribute('aria-label', `Ir a slide ${i + 1}`);
+    dot.onclick = () => { irASlide(i); reiniciarTimerCarrusel(); };
+    dots.appendChild(dot);
+  });
+
+  carruselIdx = 0;
+  actualizarCarrusel();
+  iniciarTimerCarrusel();
+
+  // Pausar al tocar
+  container.onmouseenter = () => { carruselPausado = true; };
+  container.onmouseleave = () => { carruselPausado = false; };
+}
+
+function iniciarTimerCarrusel() {
+  detenerCarrusel();
+  carruselTimer = setInterval(() => {
+    if (carruselPausado) return;
+    if (carruselHistorias.length <= 1) return;
+    carruselIdx = (carruselIdx + 1) % carruselHistorias.length;
+    actualizarCarrusel();
+  }, 5000);
+}
+
+function detenerCarrusel() {
+  if (carruselTimer) {
+    clearInterval(carruselTimer);
+    carruselTimer = null;
+  }
+}
+
+function reiniciarTimerCarrusel() {
+  iniciarTimerCarrusel();
+}
+
+function irASlide(i) {
+  if (!carruselHistorias.length) return;
+  carruselIdx = Math.max(0, Math.min(i, carruselHistorias.length - 1));
+  actualizarCarrusel();
+}
+
+function actualizarCarrusel() {
+  const track = document.getElementById('carruselTrack');
+  const dots = document.getElementById('carruselDots');
+  if (!track) return;
+
+  // Determinar cuántos slides se ven a la vez
+  const ancho = window.innerWidth;
+  let slidesVisibles = 1;
+  if (ancho >= 900) slidesVisibles = 3;
+
+  // En móvil, cada slide ocupa 100%
+  // En PC, cada slide ocupa 1/slidesVisibles
+  const porcentaje = 100 / slidesVisibles;
+  track.style.transform = `translateX(-${carruselIdx * porcentaje}%)`;
+
+  // Actualizar dots
+  if (dots) {
+    [...dots.children].forEach((d, i) => {
+      d.classList.toggle('activo', i === carruselIdx);
+    });
+  }
+}
+
+function actualizarCarruselResponsive() {
+  actualizarCarrusel();
+}
+
+window.addEventListener('resize', actualizarCarruselResponsive);
+
+// Botones prev/next del carrusel
+document.getElementById('carruselPrev')?.addEventListener('click', () => {
+  if (!carruselHistorias.length) return;
+  carruselIdx = (carruselIdx - 1 + carruselHistorias.length) % carruselHistorias.length;
+  actualizarCarrusel();
+  reiniciarTimerCarrusel();
+});
+
+document.getElementById('carruselNext')?.addEventListener('click', () => {
+  if (!carruselHistorias.length) return;
+  carruselIdx = (carruselIdx + 1) % carruselHistorias.length;
+  actualizarCarrusel();
+  reiniciarTimerCarrusel();
+});
 
 /* =========================================================
    ALMACENAMIENTO LOCAL
@@ -486,7 +621,7 @@ async function cargarPerfilSupabase(userId) {
 }
 
 /* =========================================================
-   STORAGE: PORTADAS
+   STORAGE
 ========================================================= */
 async function subirPortadaSupabase(archivo, storyId) {
   const extension = (archivo.name || 'img.jpg').split('.').pop().toLowerCase() || 'jpg';
@@ -572,8 +707,6 @@ function mostrarApp() {
     inicio.style.display = 'block';
     inicio.classList.add('activa');
   }
-  const btnFlotante = document.getElementById('btnPublicarFlotante');
-  if (btnFlotante) btnFlotante.style.display = 'flex';
 }
 
 document.getElementById('btnIrLogin').onclick = mostrarLogin;
@@ -584,7 +717,7 @@ document.getElementById('linkIrRegistro').onclick = e => { e.preventDefault(); m
 document.getElementById('linkIrLogin').onclick = e => { e.preventDefault(); mostrarLogin(); };
 
 /* =========================================================
-   VALIDACIÓN EN VIVO DE EDAD EN REGISTRO
+   VALIDACIÓN DE EDAD EN REGISTRO
 ========================================================= */
 const inputRegFecha = document.getElementById('regFechaNacimiento');
 const errorRegEdad = document.getElementById('regErrorEdad');
@@ -778,7 +911,7 @@ document.getElementById('formLogin').onsubmit = async e => {
 /* =========================================================
    CERRAR SESIÓN
 ========================================================= */
-document.getElementById('btnCerrarSesion').onclick = async () => {
+async function cerrarSesion() {
   if (!confirm('¿Cerrar sesión?')) return;
   try {
     await supabaseClient.auth.signOut();
@@ -787,12 +920,16 @@ document.getElementById('btnCerrarSesion').onclick = async () => {
     edadUsuario = null;
     _historiasCache = [];
     for (const k in cacheImagenes) delete cacheImagenes[k];
+    detenerCarrusel();
     toast('Sesión cerrada', 'info');
     mostrarBienvenida();
   } catch (err) {
     toast('Error al cerrar sesión', 'error');
   }
-};
+}
+
+document.getElementById('btnCerrarSesion').onclick = cerrarSesion;
+document.getElementById('btnCerrarSesionPC').onclick = cerrarSesion;
 
 /* =========================================================
    INICIALIZAR APP
@@ -847,6 +984,7 @@ async function inicializarApp(user) {
   actualizarEdadUsuario(perfilActual.fecha_nacimiento);
   actualizarAvatarCabecera();
   actualizarDrawerUsuario();
+  actualizarSidebarUsuario();
 
   toast('☁️ Cargando historias...', 'info', 2000);
   await recargarHistorias();
@@ -870,14 +1008,14 @@ function actualizarAvatarCabecera() {
 }
 
 /* =========================================================
-   DRAWER USUARIO
+   DRAWER USUARIO + SIDEBAR USUARIO
 ========================================================= */
 function actualizarDrawerUsuario() {
   const drawerUser = document.getElementById('drawerUsuario');
   if (!drawerUser || !usuarioActual) return;
 
   const edadTxt = edadUsuario ? `📅 ${edadUsuario.anios} años` : '';
-  const modoTxt = edadUsuario ? (edadUsuario.esMenor ? '👶 Menor de edad' : '✅ Mayor de edad') : '';
+  const modoTxt = edadUsuario ? (edadUsuario.esMenor ? '👶 Menor' : '✅ Mayor') : '';
   const miembroTxt = formatearMiembroDesde(perfilActual.created_at);
 
   drawerUser.innerHTML = `
@@ -885,6 +1023,22 @@ function actualizarDrawerUsuario() {
     ${escapeHtml(usuarioActual.email || '')}
     ${edadTxt ? `<span class="info-edad-drawer">${edadTxt} · ${modoTxt}</span>` : ''}
     ${miembroTxt ? `<span class="miembro-drawer">🎂 ${miembroTxt}</span>` : ''}
+  `;
+}
+
+function actualizarSidebarUsuario() {
+  const sidebarUser = document.getElementById('sidebarUsuario');
+  if (!sidebarUser || !usuarioActual) return;
+
+  const edadTxt = edadUsuario ? `📅 ${edadUsuario.anios} años` : '';
+  const modoTxt = edadUsuario ? (edadUsuario.esMenor ? '👶 Menor' : '✅ Mayor') : '';
+  const miembroTxt = formatearMiembroDesde(perfilActual.created_at);
+
+  sidebarUser.innerHTML = `
+    <span class="nombre-sidebar">${escapeHtml(perfilActual.username || 'Anónimo')}</span>
+    ${escapeHtml(usuarioActual.email || '')}
+    ${edadTxt ? `<span class="info-sidebar">${edadTxt} · ${modoTxt}</span>` : ''}
+    ${miembroTxt ? `<span class="info-sidebar">🎂 ${miembroTxt}</span>` : ''}
   `;
 }
 
@@ -917,6 +1071,17 @@ const vistas = {
   ajustes:    document.getElementById('vistaAjustes'),
 };
 
+function actualizarBotonActivo(nombre) {
+  // Sidebar (PC)
+  document.querySelectorAll('.sidebar-btn[data-vista]').forEach(b => {
+    b.classList.toggle('activo', b.dataset.vista === nombre);
+  });
+  // Bottom nav (móvil)
+  document.querySelectorAll('.bn-btn[data-vista]').forEach(b => {
+    b.classList.toggle('activo', b.dataset.vista === nombre);
+  });
+}
+
 async function mostrarVista(nombre) {
   if (nombre !== 'lector') {
     salirDePantallaCompleta();
@@ -934,10 +1099,7 @@ async function mostrarVista(nombre) {
     vistas[nombre].classList.add('activa');
   }
 
-  const btnFlotante = document.getElementById('btnPublicarFlotante');
-  if (btnFlotante) {
-    btnFlotante.style.display = (nombre === 'inicio') ? 'flex' : 'none';
-  }
+  actualizarBotonActivo(nombre);
 
   cerrarDrawer();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -961,11 +1123,35 @@ document.getElementById('btnMenu').onclick = abrirDrawer;
 document.getElementById('btnCerrarDrawer').onclick = cerrarDrawer;
 overlay.onclick = cerrarDrawer;
 
+// Drawer (móvil)
 document.querySelectorAll('.drawer-nav button[data-vista]').forEach(btn => {
   btn.onclick = () => {
     const v = btn.dataset.vista;
     if (v === 'publicar') mostrarVista('publicar');
     else mostrarVista(v);
+  };
+});
+
+// Sidebar (PC)
+document.querySelectorAll('.sidebar-btn[data-vista]').forEach(btn => {
+  btn.onclick = () => {
+    const v = btn.dataset.vista;
+    if (v === 'publicar') mostrarVista('publicar');
+    else mostrarVista(v);
+  };
+});
+
+// Bottom nav (móvil)
+document.querySelectorAll('.bn-btn[data-vista]').forEach(btn => {
+  btn.onclick = () => {
+    const v = btn.dataset.vista;
+    if (v === 'publicar') {
+      prepararNuevaHistoria();
+      mostrarVista('publicar');
+      activarTabPublicar('formulario');
+    } else {
+      mostrarVista(v);
+    }
   };
 });
 
@@ -1093,7 +1279,7 @@ function crearTarjeta(h) {
 }
 
 /* =========================================================
-   VISTAS: INICIO / CATÁLOGO / BIBLIOTECA / HISTORIAL
+   VISTAS
 ========================================================= */
 async function renderizarHistorias(filtro = '') {
   const cont = document.getElementById('listaHistorias');
@@ -1103,8 +1289,14 @@ async function renderizarHistorias(filtro = '') {
 
   await recargarHistorias();
 
+  const todas = filtrarHistoriasPorEdad(_historiasCache.filter(esVisible));
+
+  // Iniciar carrusel con las 5 más recientes
+  iniciarCarrusel(todas);
+
+  // Filtrar por búsqueda para el grid
   cont.innerHTML = '';
-  const historias = filtrarHistoriasPorEdad(_historiasCache.filter(esVisible)).filter(h => {
+  const historias = todas.filter(h => {
     if (!filtro) return true;
     const t = (h.titulo + ' ' + (h.autor || '') + ' ' + h.genero + ' ' + h.etiquetas.join(' ')).toLowerCase();
     return t.includes(filtro.toLowerCase());
@@ -1181,9 +1373,6 @@ function renderizarHistorial() {
   }
 }
 
-/* =========================================================
-   SIGUIENDO
-========================================================= */
 function renderizarSiguiendo() {
   const cont = document.getElementById('listaAutores');
   const vacio = document.getElementById('siguiendoVacio');
@@ -1238,7 +1427,7 @@ function contarSeguidores(nombreAutor) {
 }
 
 /* =========================================================
-   PUBLICAR: PESTAÑAS
+   PUBLICAR
 ========================================================= */
 function activarTabPublicar(nombre) {
   const tabs = ['publicadas', 'borradores', 'formulario'];
@@ -1399,7 +1588,6 @@ function prepararEdicionHistoria(id) {
   prev.innerHTML = '';
   if (h.portadaUrl) prev.innerHTML = `<img src="${h.portadaUrl}">`;
 
-  // Cargar género y subgéneros en el grid
   generoSeleccionado = h.genero || '';
   document.getElementById('genero').value = generoSeleccionado;
   subgenerosSeleccionados = Array.isArray(h.subgenero) ? h.subgenero.slice(0, MAX_SUBGENEROS) : [];
@@ -2169,6 +2357,7 @@ document.getElementById('formPerfil').onsubmit = async e => {
     toast('Perfil guardado', 'success');
     actualizarAvatarCabecera();
     actualizarDrawerUsuario();
+    actualizarSidebarUsuario();
     await recargarHistorias();
     await renderizarPerfil();
   } catch (err) { mostrarErrorCompleto(err, 'Error al guardar perfil'); }
@@ -2273,7 +2462,6 @@ async function iniciar() {
   aplicarTemaYColor();
   aplicarLectura();
 
-  // Inicializar grids aunque no haya sesión (por si acaso)
   renderizarGridGeneros();
   renderizarGridSubgeneros();
   actualizarContadorGenero();
@@ -2300,6 +2488,7 @@ async function iniciar() {
       perfilActual = null;
       edadUsuario = null;
       _historiasCache = [];
+      detenerCarrusel();
       mostrarBienvenida();
     }
   });
