@@ -606,7 +606,7 @@ async function cargarPerfilSupabase(userId) {
 }
 
 /* =========================================================
-   STORAGE
+   STORAGE: PORTADAS
 ========================================================= */
 async function subirPortadaSupabase(archivo, storyId) {
   const extension = (archivo.name || 'img.jpg').split('.').pop().toLowerCase() || 'jpg';
@@ -628,6 +628,31 @@ async function subirPortadaBase64Supabase(base64, storyId) {
   const blob = await respuesta.blob();
   const archivo = new File([blob], `${storyId}_${Date.now()}.jpg`, { type: 'image/jpeg' });
   return await subirPortadaSupabase(archivo, storyId);
+}
+
+/* =========================================================
+   STORAGE: AVATARES (foto de perfil)
+========================================================= */
+async function subirAvatarSupabase(archivo) {
+  const extension = (archivo.name || 'avatar.jpg').split('.').pop().toLowerCase() || 'jpg';
+  const nombreArchivo = `${usuarioActual.id}/avatar_${Date.now()}.${extension}`;
+
+  const { error } = await supabaseClient.storage
+    .from('Avatares')
+    .upload(nombreArchivo, archivo, { upsert: true, cacheControl: '3600' });
+  if (error) throw error;
+
+  const { data: { publicUrl } } = supabaseClient.storage
+    .from('Avatares')
+    .getPublicUrl(nombreArchivo);
+  return publicUrl;
+}
+
+async function subirAvatarBase64Supabase(base64) {
+  const respuesta = await fetch(base64);
+  const blob = await respuesta.blob();
+  const archivo = new File([blob], `avatar_${Date.now()}.jpg`, { type: 'image/jpeg' });
+  return await subirAvatarSupabase(archivo);
 }
 
 /* =========================================================
@@ -692,7 +717,6 @@ function mostrarApp() {
     inicio.style.display = 'block';
     inicio.classList.add('activa');
   }
-  // El botón flotante lo maneja el CSS según el ancho de pantalla
 }
 
 document.getElementById('btnIrLogin').onclick = mostrarLogin;
@@ -757,10 +781,18 @@ document.getElementById('btnDiagnostico').onclick = async () => {
 
   try {
     const { error } = await supabaseClient.storage.from('Portadas').list('', { limit: 1 });
-    if (error) toast('⚠️ Storage: ' + error.message, 'warn', 6000);
+    if (error) toast('⚠️ Storage Portadas: ' + error.message, 'warn', 6000);
     else toast('✅ Storage "Portadas": OK', 'success', 5000);
   } catch (e) {
-    toast('❌ Storage falló: ' + e.message, 'error', 6000);
+    toast('❌ Storage Portadas falló: ' + e.message, 'error', 6000);
+  }
+
+  try {
+    const { error } = await supabaseClient.storage.from('Avatares').list('', { limit: 1 });
+    if (error) toast('⚠️ Storage Avatares: ' + error.message, 'warn', 6000);
+    else toast('✅ Storage "Avatares": OK', 'success', 5000);
+  } catch (e) {
+    toast('❌ Storage Avatares falló: ' + e.message, 'error', 6000);
   }
 
   if (edadUsuario) {
@@ -987,7 +1019,7 @@ function actualizarAvatarCabecera() {
   const btn = document.getElementById('btnPerfilTop');
   if (!btn) return;
   if (perfilActual && perfilActual.avatar_url) {
-    btn.innerHTML = `<img src="${perfilActual.avatar_url}" alt="">`;
+    btn.innerHTML = `<img src="${perfilActual.avatar_url}" alt="" onerror="this.style.display='none'; this.parentElement.textContent='${perfilActual.emoji || '👤'}';">`;
   } else {
     btn.textContent = (perfilActual && perfilActual.emoji) || '👤';
   }
@@ -1058,11 +1090,9 @@ const vistas = {
 };
 
 function actualizarBotonActivo(nombre) {
-  // Sidebar (PC)
   document.querySelectorAll('.sidebar-btn[data-vista]').forEach(b => {
     b.classList.toggle('activo', b.dataset.vista === nombre);
   });
-  // Bottom nav (móvil)
   document.querySelectorAll('.bn-btn[data-vista]').forEach(b => {
     b.classList.toggle('activo', b.dataset.vista === nombre);
   });
@@ -1109,7 +1139,6 @@ document.getElementById('btnMenu').onclick = abrirDrawer;
 document.getElementById('btnCerrarDrawer').onclick = cerrarDrawer;
 overlay.onclick = cerrarDrawer;
 
-// Drawer (móvil)
 document.querySelectorAll('.drawer-nav button[data-vista]').forEach(btn => {
   btn.onclick = () => {
     const v = btn.dataset.vista;
@@ -1118,7 +1147,6 @@ document.querySelectorAll('.drawer-nav button[data-vista]').forEach(btn => {
   };
 });
 
-// Sidebar (PC)
 document.querySelectorAll('.sidebar-btn[data-vista]').forEach(btn => {
   btn.onclick = () => {
     const v = btn.dataset.vista;
@@ -1127,7 +1155,6 @@ document.querySelectorAll('.sidebar-btn[data-vista]').forEach(btn => {
   };
 });
 
-// Bottom nav (móvil)
 document.querySelectorAll('.bn-btn[data-vista]').forEach(btn => {
   btn.onclick = () => {
     const v = btn.dataset.vista;
@@ -2248,7 +2275,7 @@ async function renderizarPerfil() {
 
   const av = document.getElementById('perfilAvatar');
   if (perfilActual.avatar_url) {
-    av.innerHTML = `<img src="${perfilActual.avatar_url}">`;
+    av.innerHTML = `<img src="${perfilActual.avatar_url}" alt="" onerror="this.style.display='none'; this.parentElement.textContent='${perfilActual.emoji || '👤'}';">`;
     document.getElementById('btnQuitarFoto').style.display = 'inline-block';
   } else {
     av.textContent = perfilActual.emoji || '👤';
@@ -2314,14 +2341,34 @@ document.getElementById('formPerfil').onsubmit = async e => {
   const bio = document.getElementById('perfilBio').value.trim();
   const emoji = document.getElementById('perfilEmoji').value.trim() || '👤';
 
-  perfilActual = {
-    ...perfilActual,
-    nombre, apellido, genero,
-    username, bio, emoji,
-    avatar_url: fotoPerfilTemp || perfilActual.avatar_url || null
-  };
+  const btn = e.target.querySelector('button[type="submit"]');
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
 
   try {
+    let avatarUrl = perfilActual.avatar_url || null;
+
+    if (fotoPerfilTemp) {
+      btn.textContent = 'Subiendo foto...';
+      try {
+        avatarUrl = await subirAvatarBase64Supabase(fotoPerfilTemp);
+        console.log('✅ Avatar subido:', avatarUrl);
+      } catch (errFoto) {
+        console.error('Error subiendo avatar:', errFoto);
+        toast('⚠️ No se pudo subir la foto, pero se guardará el resto del perfil.', 'warn', 5000);
+        avatarUrl = perfilActual.avatar_url || null;
+      }
+    }
+
+    btn.textContent = 'Guardando...';
+
+    perfilActual = {
+      ...perfilActual,
+      nombre, apellido, genero,
+      username, bio, emoji,
+      avatar_url: avatarUrl
+    };
+
     await guardarPerfilSupabase({
       username,
       nombre,
@@ -2329,22 +2376,28 @@ document.getElementById('formPerfil').onsubmit = async e => {
       genero,
       bio,
       emoji,
-      avatar_url: perfilActual.avatar_url
+      avatar_url: avatarUrl
     });
 
     for (const h of _historiasCache) {
       if (h.user_id === usuarioActual.id) {
-        await actualizarHistoriaSupabase({ ...h, autor: username, autorFoto: perfilActual.avatar_url });
+        await actualizarHistoriaSupabase({ ...h, autor: username, autorFoto: avatarUrl });
       }
     }
 
-    toast('Perfil guardado', 'success');
+    toast('✅ Perfil guardado', 'success');
+    fotoPerfilTemp = null;
     actualizarAvatarCabecera();
     actualizarDrawerUsuario();
     actualizarSidebarUsuario();
     await recargarHistorias();
     await renderizarPerfil();
-  } catch (err) { mostrarErrorCompleto(err, 'Error al guardar perfil'); }
+  } catch (err) {
+    mostrarErrorCompleto(err, 'Error al guardar perfil');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
 };
 
 /* =========================================================
