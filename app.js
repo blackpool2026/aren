@@ -227,10 +227,8 @@ function iniciarCarrusel(historias) {
   const container = document.getElementById('carruselTop');
   if (!track || !dots || !container) return;
 
-  // Detener el anterior
   detenerCarrusel();
 
-  // Tomar las 5 más recientes
   carruselHistorias = historias.slice(0, 5);
   if (!carruselHistorias.length) {
     container.style.display = 'none';
@@ -238,12 +236,10 @@ function iniciarCarrusel(historias) {
   }
   container.style.display = 'block';
 
-  // Renderizar slides
   track.innerHTML = '';
   carruselHistorias.forEach(h => {
     const slide = document.createElement('div');
     slide.className = 'carrusel-slide';
-    const subgeneros = (h.subgenero || []).slice(0, 3).map(s => `<span class="etiqueta-sub">${escapeHtml(s)}</span>`).join('');
     slide.innerHTML = `
       <div class="carrusel-slide-portada">
         ${h.portadaUrl ? `<img src="${h.portadaUrl}" alt="">` : '📖'}
@@ -259,7 +255,6 @@ function iniciarCarrusel(historias) {
     track.appendChild(slide);
   });
 
-  // Renderizar dots
   dots.innerHTML = '';
   carruselHistorias.forEach((_, i) => {
     const dot = document.createElement('button');
@@ -273,7 +268,6 @@ function iniciarCarrusel(historias) {
   actualizarCarrusel();
   iniciarTimerCarrusel();
 
-  // Pausar al tocar
   container.onmouseenter = () => { carruselPausado = true; };
   container.onmouseleave = () => { carruselPausado = false; };
 }
@@ -310,17 +304,13 @@ function actualizarCarrusel() {
   const dots = document.getElementById('carruselDots');
   if (!track) return;
 
-  // Determinar cuántos slides se ven a la vez
   const ancho = window.innerWidth;
   let slidesVisibles = 1;
   if (ancho >= 900) slidesVisibles = 3;
 
-  // En móvil, cada slide ocupa 100%
-  // En PC, cada slide ocupa 1/slidesVisibles
   const porcentaje = 100 / slidesVisibles;
   track.style.transform = `translateX(-${carruselIdx * porcentaje}%)`;
 
-  // Actualizar dots
   if (dots) {
     [...dots.children].forEach((d, i) => {
       d.classList.toggle('activo', i === carruselIdx);
@@ -328,13 +318,8 @@ function actualizarCarrusel() {
   }
 }
 
-function actualizarCarruselResponsive() {
-  actualizarCarrusel();
-}
+window.addEventListener('resize', actualizarCarrusel);
 
-window.addEventListener('resize', actualizarCarruselResponsive);
-
-// Botones prev/next del carrusel
 document.getElementById('carruselPrev')?.addEventListener('click', () => {
   if (!carruselHistorias.length) return;
   carruselIdx = (carruselIdx - 1 + carruselHistorias.length) % carruselHistorias.length;
@@ -707,6 +692,7 @@ function mostrarApp() {
     inicio.style.display = 'block';
     inicio.classList.add('activa');
   }
+  // El botón flotante lo maneja el CSS según el ancho de pantalla
 }
 
 document.getElementById('btnIrLogin').onclick = mostrarLogin;
@@ -1291,10 +1277,8 @@ async function renderizarHistorias(filtro = '') {
 
   const todas = filtrarHistoriasPorEdad(_historiasCache.filter(esVisible));
 
-  // Iniciar carrusel con las 5 más recientes
   iniciarCarrusel(todas);
 
-  // Filtrar por búsqueda para el grid
   cont.innerHTML = '';
   const historias = todas.filter(h => {
     if (!filtro) return true;
