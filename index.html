@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1976d2">
   <title>Aren — Historias</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lora:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
 </head>
@@ -107,6 +110,8 @@
         <span class="sidebar-logo">Aren</span>
       </div>
 
+      <div class="sidebar-usuario" id="sidebarUsuario"></div>
+
       <nav class="sidebar-nav">
         <div class="sidebar-seccion">📖 Lectura</div>
         <button data-vista="inicio" class="sidebar-btn">🏠 Inicio</button>
@@ -127,7 +132,6 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div class="sidebar-usuario" id="sidebarUsuario"></div>
         <button id="btnCerrarSesionPC" class="sidebar-btn-cerrar">🚪 Cerrar sesión</button>
       </div>
     </aside>
@@ -151,14 +155,10 @@
         </div>
         <nav class="drawer-nav">
 
-          <details class="drawer-grupo">
-            <summary>📖 Modo Lectura</summary>
-            <button data-vista="inicio">🏠 Inicio</button>
-            <button data-vista="catalogo">📚 Catálogo</button>
-            <button data-vista="publicar">✍️ Publicar</button>
-            <button data-vista="biblioteca">💾 Biblioteca</button>
+          <div class="drawer-grupo">
+            <div class="drawer-titulo">📖 Modo Lectura</div>
             <button data-vista="historial">📖 Historial</button>
-          </details>
+          </div>
 
           <details class="drawer-grupo">
             <summary>💬 Modo Social</summary>
@@ -169,7 +169,6 @@
           </details>
 
           <div class="drawer-separador"></div>
-          <button data-vista="perfil">👤 Perfil</button>
           <button data-vista="ajustes">⚙️ Ajustes</button>
 
           <div class="drawer-separador"></div>
