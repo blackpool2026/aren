@@ -101,446 +101,511 @@
   ====================================================== -->
   <div id="appPrincipal" style="display:none;">
 
-    <header class="header">
+    <!-- SIDEBAR (PC) -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-logo">Aren</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-seccion">📖 Lectura</div>
+        <button data-vista="inicio" class="sidebar-btn">🏠 Inicio</button>
+        <button data-vista="catalogo" class="sidebar-btn">📚 Catálogo</button>
+        <button data-vista="publicar" class="sidebar-btn">✍️ Publicar</button>
+        <button data-vista="biblioteca" class="sidebar-btn">💾 Biblioteca</button>
+        <button data-vista="historial" class="sidebar-btn">📖 Historial</button>
+
+        <div class="sidebar-seccion">💬 Social</div>
+        <button data-vista="siguiendo" class="sidebar-btn">👥 Siguiendo</button>
+        <button data-vista="comunidades" class="sidebar-btn">🏘️ Comunidades</button>
+        <button data-vista="popular" class="sidebar-btn">🔥 Popular</button>
+        <button data-vista="crearPost" class="sidebar-btn">✍️ Crear post</button>
+
+        <div class="sidebar-seccion">⚙️ Cuenta</div>
+        <button data-vista="perfil" class="sidebar-btn">👤 Perfil</button>
+        <button data-vista="ajustes" class="sidebar-btn">⚙️ Ajustes</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-usuario" id="sidebarUsuario"></div>
+        <button id="btnCerrarSesionPC" class="sidebar-btn-cerrar">🚪 Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <!-- HEADER MÓVIL -->
+    <header class="header header-movil">
       <button id="btnMenu" class="menu-btn" aria-label="Menú">☰</button>
       <h1 class="logo">Aren</h1>
       <button id="btnPerfilTop" class="header-avatar" aria-label="Perfil"></button>
     </header>
 
-    <div id="drawerOverlay" class="drawer-overlay"></div>
-    <aside id="drawer" class="drawer">
-      <div class="drawer-header">
-        <span class="drawer-logo">Aren</span>
-        <button id="btnCerrarDrawer" class="drawer-cerrar" aria-label="Cerrar menú">✕</button>
-      </div>
-      <nav class="drawer-nav">
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="contenido-principal">
 
-        <details class="drawer-grupo">
-          <summary>📖 Modo Lectura</summary>
-          <button data-vista="inicio">🏠 Inicio</button>
-          <button data-vista="catalogo">📚 Catálogo</button>
-          <button data-vista="publicar">✍️ Publicar</button>
-          <button data-vista="biblioteca">💾 Biblioteca</button>
-          <button data-vista="historial">📖 Historial</button>
-        </details>
+      <!-- Drawer móvil -->
+      <div id="drawerOverlay" class="drawer-overlay"></div>
+      <aside id="drawer" class="drawer">
+        <div class="drawer-header">
+          <span class="drawer-logo">Aren</span>
+          <button id="btnCerrarDrawer" class="drawer-cerrar" aria-label="Cerrar menú">✕</button>
+        </div>
+        <nav class="drawer-nav">
 
-        <details class="drawer-grupo">
-          <summary>💬 Modo Social</summary>
-          <button data-vista="siguiendo">👥 Siguiendo</button>
-          <button data-vista="comunidades">🏘️ Comunidades</button>
-          <button data-vista="popular">🔥 Popular</button>
-          <button data-vista="crearPost">✍️ Crear post</button>
-        </details>
+          <details class="drawer-grupo">
+            <summary>📖 Modo Lectura</summary>
+            <button data-vista="inicio">🏠 Inicio</button>
+            <button data-vista="catalogo">📚 Catálogo</button>
+            <button data-vista="publicar">✍️ Publicar</button>
+            <button data-vista="biblioteca">💾 Biblioteca</button>
+            <button data-vista="historial">📖 Historial</button>
+          </details>
 
-        <div class="drawer-separador"></div>
-        <button data-vista="perfil">👤 Perfil</button>
-        <button data-vista="ajustes">⚙️ Ajustes</button>
+          <details class="drawer-grupo">
+            <summary>💬 Modo Social</summary>
+            <button data-vista="siguiendo">👥 Siguiendo</button>
+            <button data-vista="comunidades">🏘️ Comunidades</button>
+            <button data-vista="popular">🔥 Popular</button>
+            <button data-vista="crearPost">✍️ Crear post</button>
+          </details>
 
-        <div class="drawer-separador"></div>
-        <div class="drawer-usuario" id="drawerUsuario"></div>
-        <button id="btnCerrarSesion" class="drawer-btn-cerrar-sesion">🚪 Cerrar sesión</button>
+          <div class="drawer-separador"></div>
+          <button data-vista="perfil">👤 Perfil</button>
+          <button data-vista="ajustes">⚙️ Ajustes</button>
 
-      </nav>
-    </aside>
+          <div class="drawer-separador"></div>
+          <div class="drawer-usuario" id="drawerUsuario"></div>
+          <button id="btnCerrarSesion" class="drawer-btn-cerrar-sesion">🚪 Cerrar sesión</button>
 
-    <main id="vistaInicio" class="vista activa" style="display:block;">
-      <div class="buscador">
-        <input type="text" id="inputBuscar" placeholder="Buscar historias, autores o etiquetas...">
-      </div>
-      <h3 class="subtitulo">Recién publicadas</h3>
-      <div id="listaHistorias" class="grid-historias"></div>
-      <p id="mensajeVacio" class="mensaje-vacio" style="display:none;">
-        Aún no hay historias. ¡Sé el primero en publicar!
-      </p>
-    </main>
+        </nav>
+      </aside>
 
-    <main id="vistaCatalogo" class="vista" style="display:none;">
-      <h2>Catálogo</h2>
-      <div id="filtrosGenero" class="filtros-genero"></div>
-      <div id="catalogoLista" class="grid-historias"></div>
-    </main>
+      <!-- VISTA: INICIO -->
+      <main id="vistaInicio" class="vista activa" style="display:block;">
+        <div class="buscador">
+          <input type="text" id="inputBuscar" placeholder="Buscar historias, autores o etiquetas...">
+        </div>
 
-    <main id="vistaPublicar" class="vista" style="display:none;">
-      <h2>✍️ Publicar</h2>
+        <h3 class="subtitulo">✨ Recién publicadas</h3>
+        <div id="carruselTop" class="carrusel-top">
+          <div class="carrusel-track" id="carruselTrack"></div>
+          <button class="carrusel-btn carrusel-prev" id="carruselPrev" aria-label="Anterior">‹</button>
+          <button class="carrusel-btn carrusel-next" id="carruselNext" aria-label="Siguiente">›</button>
+          <div class="carrusel-dots" id="carruselDots"></div>
+        </div>
 
-      <!-- Pestañas -->
-      <div class="tabs-publicar">
-        <button id="tabMisPublicadas" class="tab-btn activo">📖 Publicadas</button>
-        <button id="tabMisBorradores" class="tab-btn">📝 Borradores</button>
-        <button id="btnNuevaHistoriaTab" class="tab-btn tab-nueva">➕ Nueva</button>
-      </div>
+        <h3 class="subtitulo">📚 Todas las historias</h3>
+        <div id="listaHistorias" class="grid-historias"></div>
+        <p id="mensajeVacio" class="mensaje-vacio" style="display:none;">
+          Aún no hay historias. ¡Sé el primero en publicar!
+        </p>
+      </main>
 
-      <!-- Panel: Mis historias publicadas -->
-      <div id="panelPublicadas" class="panel-tab">
-        <div id="listaMisPublicadas" class="grid-historias"></div>
-        <p id="misPublicadasVacio" class="mensaje-vacio">Aún no has publicado ninguna historia.</p>
-      </div>
+      <main id="vistaCatalogo" class="vista" style="display:none;">
+        <h2>Catálogo</h2>
+        <div id="filtrosGenero" class="filtros-genero"></div>
+        <div id="catalogoLista" class="grid-historias"></div>
+      </main>
 
-      <!-- Panel: Mis borradores -->
-      <div id="panelBorradores" class="panel-tab" style="display:none;">
-        <div id="listaMisBorradores" class="grid-historias"></div>
-        <p id="misBorradoresVacio" class="mensaje-vacio">No tienes borradores.</p>
-      </div>
+      <main id="vistaPublicar" class="vista" style="display:none;">
+        <h2>✍️ Publicar</h2>
 
-      <!-- Panel: Formulario (nueva / editar) -->
-      <div id="panelFormulario" class="panel-tab" style="display:none;">
-        <h3 id="tituloFormulario" class="subtitulo">Nueva historia</h3>
-        <form id="formHistoria" class="formulario" novalidate>
-          <label for="portada" class="btn-subir-foto">
+        <div class="tabs-publicar">
+          <button id="tabMisPublicadas" class="tab-btn activo">📖 Publicadas</button>
+          <button id="tabMisBorradores" class="tab-btn">📝 Borradores</button>
+          <button id="btnNuevaHistoriaTab" class="tab-btn tab-nueva">➕ Nueva</button>
+        </div>
+
+        <div id="panelPublicadas" class="panel-tab">
+          <div id="listaMisPublicadas" class="grid-historias"></div>
+          <p id="misPublicadasVacio" class="mensaje-vacio">Aún no has publicado ninguna historia.</p>
+        </div>
+
+        <div id="panelBorradores" class="panel-tab" style="display:none;">
+          <div id="listaMisBorradores" class="grid-historias"></div>
+          <p id="misBorradoresVacio" class="mensaje-vacio">No tienes borradores.</p>
+        </div>
+
+        <div id="panelFormulario" class="panel-tab" style="display:none;">
+          <h3 id="tituloFormulario" class="subtitulo">Nueva historia</h3>
+          <form id="formHistoria" class="formulario" novalidate>
+            <label for="portada" class="btn-subir-foto">
+              <span class="btn-subir-icono">+</span>
+              <span class="btn-subir-texto">AÑADIR</span>
+              <span class="btn-subir-limite">Máximo (3 MB)</span>
+            </label>
+            <input type="file" id="portada" accept="image/png, image/jpeg" class="input-oculto">
+            <div id="previewPortada" class="preview-portada"></div>
+            <p class="form-progress" id="infoPortada"></p>
+
+            <label>Título
+              <input type="text" id="titulo" maxlength="80" placeholder="El nombre de tu historia">
+            </label>
+
+            <label>Autor
+              <input type="text" id="autor" maxlength="40" placeholder="Tu nombre de autor">
+            </label>
+
+            <label>Dedicatoria (opcional)
+              <input type="text" id="dedicatoria" maxlength="120" placeholder="Para mi mejor amiga...">
+            </label>
+
+            <label>Sinopsis
+              <textarea id="sinopsis" maxlength="400" rows="3" placeholder="De qué trata tu historia..."></textarea>
+            </label>
+
+            <label class="label-seccion">Género principal <span class="contador-seleccion" id="contadorGenero">(elige 1)</span></label>
+            <div id="gridGeneros" class="grid-generos"></div>
+            <input type="hidden" id="genero" value="">
+
+            <label class="label-seccion">Subgéneros <span class="contador-seleccion" id="contadorSubgeneros">(0/3)</span></label>
+            <p class="form-progress" style="text-align:left;">Puedes elegir hasta 3. Combínalos libremente.</p>
+            <div id="gridSubgeneros" class="grid-generos"></div>
+
+            <label>Estado
+              <select id="estado">
+                <option>En curso</option>
+                <option>Completa</option>
+                <option>En pausa</option>
+                <option>Abandonada</option>
+              </select>
+            </label>
+
+            <label>Etiquetas (separadas por coma, máximo 10)
+              <input type="text" id="etiquetas" placeholder="amor, drama, magia">
+            </label>
+            <div id="etiquetasPreview" class="etiquetas-preview"></div>
+
+            <label class="check-advertencias">Advertencias de contenido</label>
+            <div class="advertencias">
+              <label><input type="checkbox" id="adv18" value="+18"> +18</label>
+              <label><input type="checkbox" id="advViolencia" value="Violencia"> Violencia</label>
+              <label><input type="checkbox" id="advSensible" value="Temas sensibles"> Temas sensibles</label>
+              <label><input type="checkbox" id="advLenguaje" value="Lenguaje fuerte"> Lenguaje fuerte</label>
+            </div>
+
+            <label class="switch-label" style="margin-top:14px;">
+              <input type="checkbox" id="chkBorrador">
+              Guardar como borrador (no se publicará todavía)
+            </label>
+
+            <div id="bloqueProgramar">
+              <label>Programar publicación (opcional)
+                <input type="datetime-local" id="fechaPublicacion">
+              </label>
+              <p class="form-progress">Si dejas la fecha vacía, se publicará al guardar.</p>
+            </div>
+
+            <button type="submit" class="btn-primario" id="btnGuardarHistoria">Publicar historia</button>
+            <button type="button" class="btn-secundario" id="btnCancelarFormulario">Cancelar</button>
+          </form>
+        </div>
+      </main>
+
+      <main id="vistaBiblioteca" class="vista" style="display:none;">
+        <h2>Mi Biblioteca</h2>
+        <div id="listaBiblioteca" class="grid-historias"></div>
+        <p id="bibliotecaVacia" class="mensaje-vacio">No has guardado historias aún.</p>
+      </main>
+
+      <main id="vistaHistorial" class="vista" style="display:none;">
+        <h2>Historial de lectura</h2>
+        <div id="listaHistorial" class="grid-historias"></div>
+        <p id="historialVacio" class="mensaje-vacio">Aún no has leído nada.</p>
+      </main>
+
+      <main id="vistaSiguiendo" class="vista" style="display:none;">
+        <h2>👥 Autores que sigo</h2>
+        <div id="listaAutores" class="lista-autores"></div>
+        <p id="siguiendoVacio" class="mensaje-vacio">No sigues a ningún autor aún.</p>
+      </main>
+
+      <main id="vistaComunidades" class="vista" style="display:none;">
+        <h2>Comunidades</h2>
+        <div class="proximamente">
+          <div class="proximamente-icono">🏘️</div>
+          <h3>Próximamente</h3>
+          <p>Estamos construyendo las comunidades estilo Reddit. Aquí podrás crear y unirte a espacios sobre tus temas favoritos.</p>
+        </div>
+      </main>
+
+      <main id="vistaPopular" class="vista" style="display:none;">
+        <h2>Popular</h2>
+        <div class="proximamente">
+          <div class="proximamente-icono">🔥</div>
+          <h3>Próximamente</h3>
+          <p>Aquí verás los posts más votados de todas las comunidades.</p>
+        </div>
+      </main>
+
+      <main id="vistaCrearPost" class="vista" style="display:none;">
+        <h2>Crear post</h2>
+        <div class="proximamente">
+          <div class="proximamente-icono">✍️</div>
+          <h3>Próximamente</h3>
+          <p>Podrás publicar textos, enlaces e imágenes en las comunidades.</p>
+        </div>
+      </main>
+
+      <main id="vistaLector" class="vista" style="display:none;">
+        <button id="btnVolver" class="btn-secundario">← Volver</button>
+
+        <div id="detalleHistoria">
+          <img id="detallePortada" class="detalle-portada" style="display:none;">
+          <h2 id="lectorTitulo"></h2>
+          <p id="lectorAutor" class="autor-linea"></p>
+          <p id="lectorMeta" class="meta"></p>
+          <div id="lectorAdvertencias" class="advertencias-mostradas"></div>
+          <p id="lectorSinopsis" class="sinopsis"></p>
+
+          <div class="acciones-historia">
+            <button id="btnGuardar" class="btn-secundario">💾 Guardar</button>
+            <button id="btnSeguirAutor" class="btn-secundario">👥 Seguir autor</button>
+          </div>
+
+          <div class="acciones-historia" id="accionesAutor" style="display:none;">
+            <button id="btnEditarHistoria" class="btn-secundario">✏️ Editar</button>
+            <button id="btnPublicarAhora" class="btn-secundario">🚀 Publicar ahora</button>
+            <button id="btnExportarPDF" class="btn-secundario">📄 Exportar PDF</button>
+            <button id="btnEliminarHistoria" class="btn-secundario btn-peligro">🗑️ Eliminar</button>
+          </div>
+
+          <div class="valoracion">
+            <span>Valoración:</span>
+            <div id="estrellasValoracion" class="estrellas"></div>
+            <span id="promedioValoracion" class="promedio"></span>
+          </div>
+
+          <h3 class="subtitulo">Capítulos</h3>
+          <ul id="listaCapitulos" class="lista-capitulos"></ul>
+          <button id="btnNuevoCapitulo" class="btn-primario" style="display:none;">➕ Añadir capítulo</button>
+        </div>
+
+        <div id="vistaLecturaCapitulo" style="display:none;">
+          <button id="btnVolverCapitulos" class="btn-secundario">← Capítulos</button>
+          <h2 id="tituloCapitulo"></h2>
+          <p id="metaCapitulo" class="meta"></p>
+
+          <div class="lectura-controles">
+            <button id="btnLecturaMenos" class="btn-secundario" aria-label="Reducir tamaño de letra">A−</button>
+            <button id="btnLecturaMas" class="btn-secundario" aria-label="Aumentar tamaño de letra">A+</button>
+            <button id="btnLecturaSerif" class="btn-secundario" aria-label="Fuente serif">Serif</button>
+            <button id="btnLecturaSans" class="btn-secundario" aria-label="Fuente sans">Sans</button>
+            <button id="btnLecturaAncho" class="btn-secundario" aria-label="Cambiar ancho">Ancho</button>
+            <button id="btnSepia" class="btn-secundario" aria-label="Modo sepia">📜 Sepia</button>
+            <button id="btnPantallaCompleta" class="btn-secundario" aria-label="Pantalla completa">⛶️</button>
+            <button id="btnTTS" class="btn-secundario" aria-label="Leer en voz alta">🔊</button>
+          </div>
+
+          <div id="contenidoCapitulo" class="contenido-lectura"></div>
+          <div id="scrollSentinel"></div>
+
+          <div class="nav-capitulos">
+            <button id="btnCapAnterior" class="btn-secundario">← Anterior</button>
+            <button id="btnCapSiguiente" class="btn-secundario">Siguiente →</button>
+          </div>
+
+          <h3 class="subtitulo">Comentarios</h3>
+          <div id="listaComentarios" class="lista-comentarios"></div>
+          <form id="formComentario" class="form-comentario">
+            <input type="text" id="inputComentario" placeholder="Escribe un comentario..." required>
+            <button type="submit" class="btn-primario">Enviar</button>
+          </form>
+        </div>
+      </main>
+
+      <main id="vistaEditorCapitulo" class="vista" style="display:none;">
+        <h2 id="tituloEditorCapitulo">Nuevo capítulo</h2>
+        <form id="formCapitulo" class="formulario" novalidate>
+          <label>Título del capítulo
+            <input type="text" id="tituloCapituloInput" maxlength="100">
+          </label>
+
+          <div class="barra-editor">
+            <button type="button" data-cmd="bold"><b>B</b></button>
+            <button type="button" data-cmd="italic"><i>I</i></button>
+            <button type="button" data-cmd="underline"><u>U</u></button>
+            <button type="button" data-cmd="strikeThrough"><s>S</s></button>
+            <button type="button" data-cmd="formatBlock" data-value="h2">H2</button>
+            <button type="button" data-cmd="formatBlock" data-value="h3">H3</button>
+            <button type="button" data-cmd="formatBlock" data-value="p">¶</button>
+            <button type="button" data-cmd="formatBlock" data-value="blockquote">❝</button>
+            <button type="button" data-cmd="insertUnorderedList">•</button>
+            <button type="button" data-cmd="insertOrderedList">1.</button>
+            <button type="button" data-cmd="justifyLeft">⬅</button>
+            <button type="button" data-cmd="justifyCenter">↔</button>
+            <button type="button" data-cmd="justifyRight">➡</button>
+            <button type="button" data-cmd="insertHorizontalRule">—</button>
+            <button type="button" id="btnInsertarImagen">🖼️</button>
+            <input type="file" id="inputImagenCap" accept="image/png, image/jpeg" style="display:none;">
+          </div>
+
+          <div id="editorContenido" class="editor-contenido" contenteditable="true"></div>
+
+          <label>Nota del autor al final del capítulo (opcional)
+            <textarea id="notaAutor" maxlength="500" rows="2" placeholder="Gracias por leer..."></textarea>
+          </label>
+
+          <div class="editor-info">
+            <span class="contador" id="contadorPalabras">0 palabras · 0 min</span>
+            <span class="contador" id="autosaveEstado"></span>
+          </div>
+
+          <button type="submit" class="btn-primario">Guardar capítulo</button>
+          <button type="button" class="btn-secundario" id="btnCancelarCapitulo">Cancelar</button>
+        </form>
+      </main>
+
+      <main id="vistaPerfil" class="vista" style="display:none;">
+        <h2>Mi perfil</h2>
+
+        <div class="perfil-card">
+          <div id="perfilAvatar" class="perfil-avatar">👤</div>
+          <div class="perfil-header-info">
+            <h3 id="perfilHeaderNombre">Anónimo</h3>
+            <p id="perfilHeaderUsername" class="perfil-header-username">@anonimo</p>
+            <span id="perfilHeaderModo" class="perfil-badge">—</span>
+            <p id="perfilHeaderMiembro" class="perfil-header-miembro"></p>
+          </div>
+        </div>
+
+        <h3 class="subtitulo">👤 Datos personales</h3>
+        <form id="formPerfil" class="formulario" novalidate>
+
+          <label for="perfilFoto" class="btn-subir-foto">
             <span class="btn-subir-icono">+</span>
-            <span class="btn-subir-texto">AÑADIR</span>
+            <span class="btn-subir-texto">CAMBIAR FOTO</span>
             <span class="btn-subir-limite">Máximo (3 MB)</span>
           </label>
-          <input type="file" id="portada" accept="image/png, image/jpeg" class="input-oculto">
-          <div id="previewPortada" class="preview-portada"></div>
-          <p class="form-progress" id="infoPortada"></p>
+          <input type="file" id="perfilFoto" accept="image/png, image/jpeg" class="input-oculto">
 
-          <label>Título
-            <input type="text" id="titulo" maxlength="80" placeholder="El nombre de tu historia">
+          <label>Nombre
+            <input type="text" id="perfilNombreReal" maxlength="40" placeholder="Tu nombre">
           </label>
 
-          <label>Autor
-            <input type="text" id="autor" maxlength="40" placeholder="Tu nombre de autor">
+          <label>Apellido
+            <input type="text" id="perfilApellido" maxlength="40" placeholder="Tu apellido">
           </label>
 
-          <label>Dedicatoria (opcional)
-            <input type="text" id="dedicatoria" maxlength="120" placeholder="Para mi mejor amiga...">
-          </label>
-
-          <label>Sinopsis
-            <textarea id="sinopsis" maxlength="400" rows="3" placeholder="De qué trata tu historia..."></textarea>
-          </label>
-
-          <!-- GÉNERO PRINCIPAL (grid, 1 solo) -->
-          <label class="label-seccion">Género principal <span class="contador-seleccion" id="contadorGenero">(elige 1)</span></label>
-          <div id="gridGeneros" class="grid-generos"></div>
-          <input type="hidden" id="genero" value="">
-
-          <!-- SUBGÉNEROS (grid, hasta 3) -->
-          <label class="label-seccion">Subgéneros <span class="contador-seleccion" id="contadorSubgeneros">(0/3)</span></label>
-          <p class="form-progress" style="text-align:left;">Puedes elegir hasta 3. Combínalos libremente.</p>
-          <div id="gridSubgeneros" class="grid-generos"></div>
-
-          <label>Estado
-            <select id="estado">
-              <option>En curso</option>
-              <option>Completa</option>
-              <option>En pausa</option>
-              <option>Abandonada</option>
+          <label>Género
+            <select id="perfilGenero">
+              <option value="">Sin especificar</option>
+              <option value="masculino">Masculino</option>
+              <option value="femenino">Femenino</option>
             </select>
           </label>
 
-          <label>Etiquetas (separadas por coma, máximo 10)
-            <input type="text" id="etiquetas" placeholder="amor, drama, magia">
-          </label>
-          <div id="etiquetasPreview" class="etiquetas-preview"></div>
-
-          <label class="check-advertencias">Advertencias de contenido</label>
-          <div class="advertencias">
-            <label><input type="checkbox" id="adv18" value="+18"> +18</label>
-            <label><input type="checkbox" id="advViolencia" value="Violencia"> Violencia</label>
-            <label><input type="checkbox" id="advSensible" value="Temas sensibles"> Temas sensibles</label>
-            <label><input type="checkbox" id="advLenguaje" value="Lenguaje fuerte"> Lenguaje fuerte</label>
-          </div>
-
-          <label class="switch-label" style="margin-top:14px;">
-            <input type="checkbox" id="chkBorrador">
-            Guardar como borrador (no se publicará todavía)
+          <label>Fecha de nacimiento
+            <input type="date" id="perfilFechaNacimiento" readonly disabled>
+            <p class="perfil-info-nota">🔒 La fecha de nacimiento no se puede cambiar. Si te equivocaste al registrarte, contacta a soporte.</p>
           </label>
 
-          <div id="bloqueProgramar">
-            <label>Programar publicación (opcional)
-              <input type="datetime-local" id="fechaPublicacion">
-            </label>
-            <p class="form-progress">Si dejas la fecha vacía, se publicará al guardar.</p>
+          <div class="perfil-info-lectura">
+            <div class="perfil-info-fila">
+              <span class="perfil-info-label">Edad:</span>
+              <span class="perfil-info-valor" id="perfilEdadMostrada">—</span>
+            </div>
+            <div class="perfil-info-fila">
+              <span class="perfil-info-label">Modo:</span>
+              <span class="perfil-info-valor" id="perfilModoMostrado">—</span>
+            </div>
+            <div class="perfil-info-fila">
+              <span class="perfil-info-label">Miembro desde:</span>
+              <span class="perfil-info-valor" id="perfilMiembroDesdeMostrado">—</span>
+            </div>
           </div>
 
-          <button type="submit" class="btn-primario" id="btnGuardarHistoria">Publicar historia</button>
-          <button type="button" class="btn-secundario" id="btnCancelarFormulario">Cancelar</button>
+          <h3 class="subtitulo">🌐 Datos públicos</h3>
+
+          <label>Nombre de usuario (público)
+            <input type="text" id="perfilNombre" maxlength="30" placeholder="Anónimo">
+          </label>
+
+          <label>Emoji alternativo (si no hay foto)
+            <input type="text" id="perfilEmoji" maxlength="4" placeholder="👤">
+          </label>
+
+          <label>Biografía
+            <textarea id="perfilBio" maxlength="200" rows="3" placeholder="Cuéntanos sobre ti..."></textarea>
+          </label>
+
+          <button type="button" class="btn-secundario" id="btnQuitarFoto" style="display:none;">Quitar foto</button>
+          <button type="submit" class="btn-primario">Guardar perfil</button>
         </form>
-      </div>
-    </main>
 
-    <main id="vistaBiblioteca" class="vista" style="display:none;">
-      <h2>Mi Biblioteca</h2>
-      <div id="listaBiblioteca" class="grid-historias"></div>
-      <p id="bibliotecaVacia" class="mensaje-vacio">No has guardado historias aún.</p>
-    </main>
+        <h3 class="subtitulo">📚 Mis historias</h3>
+        <div id="misHistorias" class="grid-historias"></div>
+      </main>
 
-    <main id="vistaHistorial" class="vista" style="display:none;">
-      <h2>Historial de lectura</h2>
-      <div id="listaHistorial" class="grid-historias"></div>
-      <p id="historialVacio" class="mensaje-vacio">Aún no has leído nada.</p>
-    </main>
+      <main id="vistaAjustes" class="vista" style="display:none;">
+        <h2>Ajustes</h2>
 
-    <main id="vistaSiguiendo" class="vista" style="display:none;">
-      <h2>👥 Autores que sigo</h2>
-      <div id="listaAutores" class="lista-autores"></div>
-      <p id="siguiendoVacio" class="mensaje-vacio">No sigues a ningún autor aún.</p>
-    </main>
-
-    <main id="vistaComunidades" class="vista" style="display:none;">
-      <h2>Comunidades</h2>
-      <div class="proximamente">
-        <div class="proximamente-icono">🏘️</div>
-        <h3>Próximamente</h3>
-        <p>Estamos construyendo las comunidades estilo Reddit. Aquí podrás crear y unirte a espacios sobre tus temas favoritos.</p>
-      </div>
-    </main>
-
-    <main id="vistaPopular" class="vista" style="display:none;">
-      <h2>Popular</h2>
-      <div class="proximamente">
-        <div class="proximamente-icono">🔥</div>
-        <h3>Próximamente</h3>
-        <p>Aquí verás los posts más votados de todas las comunidades.</p>
-      </div>
-    </main>
-
-    <main id="vistaCrearPost" class="vista" style="display:none;">
-      <h2>Crear post</h2>
-      <div class="proximamente">
-        <div class="proximamente-icono">✍️</div>
-        <h3>Próximamente</h3>
-        <p>Podrás publicar textos, enlaces e imágenes en las comunidades.</p>
-      </div>
-    </main>
-
-    <main id="vistaLector" class="vista" style="display:none;">
-      <button id="btnVolver" class="btn-secundario">← Volver</button>
-
-      <div id="detalleHistoria">
-        <img id="detallePortada" class="detalle-portada" style="display:none;">
-        <h2 id="lectorTitulo"></h2>
-        <p id="lectorAutor" class="autor-linea"></p>
-        <p id="lectorMeta" class="meta"></p>
-        <div id="lectorAdvertencias" class="advertencias-mostradas"></div>
-        <p id="lectorSinopsis" class="sinopsis"></p>
-
-        <div class="acciones-historia">
-          <button id="btnGuardar" class="btn-secundario">💾 Guardar</button>
-          <button id="btnSeguirAutor" class="btn-secundario">👥 Seguir autor</button>
+        <h3 class="subtitulo">Tema</h3>
+        <div class="fila-ajustes">
+          <button id="btnModoClaro" class="btn-secundario">☀️ Claro</button>
+          <button id="btnModoOscuro" class="btn-secundario">🌙 Oscuro</button>
+          <button id="btnModoSepia" class="btn-secundario">📜 Sepia</button>
         </div>
 
-        <div class="acciones-historia" id="accionesAutor" style="display:none;">
-          <button id="btnEditarHistoria" class="btn-secundario">✏️ Editar</button>
-          <button id="btnPublicarAhora" class="btn-secundario">🚀 Publicar ahora</button>
-          <button id="btnExportarPDF" class="btn-secundario">📄 Exportar PDF</button>
-          <button id="btnEliminarHistoria" class="btn-secundario btn-peligro">🗑️ Eliminar</button>
+        <h3 class="subtitulo">Color de acento</h3>
+        <div id="paletaColores" class="paleta-colores"></div>
+
+        <h3 class="subtitulo">Modo lectura</h3>
+        <div class="opcion-lectura">
+          <label>Tamaño de letra: <span id="lblTamano">18px</span></label>
+          <input type="range" id="sliderTamano" min="14" max="26" step="1">
+        </div>
+        <div class="opcion-lectura">
+          <label>Interlineado: <span id="lblInter">1.7</span></label>
+          <input type="range" id="sliderInter" min="14" max="22" step="1">
+        </div>
+        <div class="opcion-lectura">
+          <label>Ancho de columna: <span id="lblAncho">700px</span></label>
+          <input type="range" id="sliderAncho" min="480" max="900" step="20">
+        </div>
+        <div class="fila-ajustes">
+          <button id="btnFuenteSerif" class="btn-secundario">Serif</button>
+          <button id="btnFuenteSans" class="btn-secundario">Sans</button>
+          <button id="btnResetLectura" class="btn-secundario">Restablecer</button>
         </div>
 
-        <div class="valoracion">
-          <span>Valoración:</span>
-          <div id="estrellasValoracion" class="estrellas"></div>
-          <span id="promedioValoracion" class="promedio"></span>
+        <h3 class="subtitulo">Opciones de lectura</h3>
+        <div class="fila-ajustes">
+          <label class="switch-label">
+            <input type="checkbox" id="toggleScrollInfinito">
+            Scroll infinito entre capítulos
+          </label>
         </div>
 
-        <h3 class="subtitulo">Capítulos</h3>
-        <ul id="listaCapitulos" class="lista-capitulos"></ul>
-        <button id="btnNuevoCapitulo" class="btn-primario" style="display:none;">➕ Añadir capítulo</button>
-      </div>
-
-      <div id="vistaLecturaCapitulo" style="display:none;">
-        <button id="btnVolverCapitulos" class="btn-secundario">← Capítulos</button>
-        <h2 id="tituloCapitulo"></h2>
-        <p id="metaCapitulo" class="meta"></p>
-
-        <div class="lectura-controles">
-          <button id="btnLecturaMenos" class="btn-secundario" aria-label="Reducir tamaño de letra">A−</button>
-          <button id="btnLecturaMas" class="btn-secundario" aria-label="Aumentar tamaño de letra">A+</button>
-          <button id="btnLecturaSerif" class="btn-secundario" aria-label="Fuente serif">Serif</button>
-          <button id="btnLecturaSans" class="btn-secundario" aria-label="Fuente sans">Sans</button>
-          <button id="btnLecturaAncho" class="btn-secundario" aria-label="Cambiar ancho">Ancho</button>
-          <button id="btnSepia" class="btn-secundario" aria-label="Modo sepia">📜 Sepia</button>
-          <button id="btnPantallaCompleta" class="btn-secundario" aria-label="Pantalla completa">⛶️</button>
-          <button id="btnTTS" class="btn-secundario" aria-label="Leer en voz alta">🔊</button>
+        <h3 class="subtitulo">Avanzado</h3>
+        <div class="fila-ajustes">
+          <button id="btnDiagnostico" class="btn-secundario" style="font-size:.85rem;opacity:.75;">🔧 Diagnóstico</button>
         </div>
+      </main>
 
-        <div id="contenidoCapitulo" class="contenido-lectura"></div>
-        <div id="scrollSentinel"></div>
+    </div>
 
-        <div class="nav-capitulos">
-          <button id="btnCapAnterior" class="btn-secundario">← Anterior</button>
-          <button id="btnCapSiguiente" class="btn-secundario">Siguiente →</button>
-        </div>
-
-        <h3 class="subtitulo">Comentarios</h3>
-        <div id="listaComentarios" class="lista-comentarios"></div>
-        <form id="formComentario" class="form-comentario">
-          <input type="text" id="inputComentario" placeholder="Escribe un comentario..." required>
-          <button type="submit" class="btn-primario">Enviar</button>
-        </form>
-      </div>
-    </main>
-
-    <main id="vistaEditorCapitulo" class="vista" style="display:none;">
-      <h2 id="tituloEditorCapitulo">Nuevo capítulo</h2>
-      <form id="formCapitulo" class="formulario" novalidate>
-        <label>Título del capítulo
-          <input type="text" id="tituloCapituloInput" maxlength="100">
-        </label>
-
-        <div class="barra-editor">
-          <button type="button" data-cmd="bold"><b>B</b></button>
-          <button type="button" data-cmd="italic"><i>I</i></button>
-          <button type="button" data-cmd="underline"><u>U</u></button>
-          <button type="button" data-cmd="strikeThrough"><s>S</s></button>
-          <button type="button" data-cmd="formatBlock" data-value="h2">H2</button>
-          <button type="button" data-cmd="formatBlock" data-value="h3">H3</button>
-          <button type="button" data-cmd="formatBlock" data-value="p">¶</button>
-          <button type="button" data-cmd="formatBlock" data-value="blockquote">❝</button>
-          <button type="button" data-cmd="insertUnorderedList">•</button>
-          <button type="button" data-cmd="insertOrderedList">1.</button>
-          <button type="button" data-cmd="justifyLeft">⬅</button>
-          <button type="button" data-cmd="justifyCenter">↔</button>
-          <button type="button" data-cmd="justifyRight">➡</button>
-          <button type="button" data-cmd="insertHorizontalRule">—</button>
-          <button type="button" id="btnInsertarImagen">🖼️</button>
-          <input type="file" id="inputImagenCap" accept="image/png, image/jpeg" style="display:none;">
-        </div>
-
-        <div id="editorContenido" class="editor-contenido" contenteditable="true"></div>
-
-        <label>Nota del autor al final del capítulo (opcional)
-          <textarea id="notaAutor" maxlength="500" rows="2" placeholder="Gracias por leer..."></textarea>
-        </label>
-
-        <div class="editor-info">
-          <span class="contador" id="contadorPalabras">0 palabras · 0 min</span>
-          <span class="contador" id="autosaveEstado"></span>
-        </div>
-
-        <button type="submit" class="btn-primario">Guardar capítulo</button>
-        <button type="button" class="btn-secundario" id="btnCancelarCapitulo">Cancelar</button>
-      </form>
-    </main>
-
-    <main id="vistaPerfil" class="vista" style="display:none;">
-      <h2>Mi perfil</h2>
-
-      <div class="perfil-card">
-        <div id="perfilAvatar" class="perfil-avatar">👤</div>
-        <div class="perfil-header-info">
-          <h3 id="perfilHeaderNombre">Anónimo</h3>
-          <p id="perfilHeaderUsername" class="perfil-header-username">@anonimo</p>
-          <span id="perfilHeaderModo" class="perfil-badge">—</span>
-          <p id="perfilHeaderMiembro" class="perfil-header-miembro"></p>
-        </div>
-      </div>
-
-      <h3 class="subtitulo">👤 Datos personales</h3>
-      <form id="formPerfil" class="formulario" novalidate>
-
-        <label for="perfilFoto" class="btn-subir-foto">
-          <span class="btn-subir-icono">+</span>
-          <span class="btn-subir-texto">CAMBIAR FOTO</span>
-          <span class="btn-subir-limite">Máximo (3 MB)</span>
-        </label>
-        <input type="file" id="perfilFoto" accept="image/png, image/jpeg" class="input-oculto">
-
-        <label>Nombre
-          <input type="text" id="perfilNombreReal" maxlength="40" placeholder="Tu nombre">
-        </label>
-
-        <label>Apellido
-          <input type="text" id="perfilApellido" maxlength="40" placeholder="Tu apellido">
-        </label>
-
-        <label>Género
-          <select id="perfilGenero">
-            <option value="">Sin especificar</option>
-            <option value="masculino">Masculino</option>
-            <option value="femenino">Femenino</option>
-          </select>
-        </label>
-
-        <label>Fecha de nacimiento
-          <input type="date" id="perfilFechaNacimiento" readonly disabled>
-          <p class="perfil-info-nota">🔒 La fecha de nacimiento no se puede cambiar. Si te equivocaste al registrarte, contacta a soporte.</p>
-        </label>
-
-        <div class="perfil-info-lectura">
-          <div class="perfil-info-fila">
-            <span class="perfil-info-label">Edad:</span>
-            <span class="perfil-info-valor" id="perfilEdadMostrada">—</span>
-          </div>
-          <div class="perfil-info-fila">
-            <span class="perfil-info-label">Modo:</span>
-            <span class="perfil-info-valor" id="perfilModoMostrado">—</span>
-          </div>
-          <div class="perfil-info-fila">
-            <span class="perfil-info-label">Miembro desde:</span>
-            <span class="perfil-info-valor" id="perfilMiembroDesdeMostrado">—</span>
-          </div>
-        </div>
-
-        <h3 class="subtitulo">🌐 Datos públicos</h3>
-
-        <label>Nombre de usuario (público)
-          <input type="text" id="perfilNombre" maxlength="30" placeholder="Anónimo">
-        </label>
-
-        <label>Emoji alternativo (si no hay foto)
-          <input type="text" id="perfilEmoji" maxlength="4" placeholder="👤">
-        </label>
-
-        <label>Biografía
-          <textarea id="perfilBio" maxlength="200" rows="3" placeholder="Cuéntanos sobre ti..."></textarea>
-        </label>
-
-        <button type="button" class="btn-secundario" id="btnQuitarFoto" style="display:none;">Quitar foto</button>
-        <button type="submit" class="btn-primario">Guardar perfil</button>
-      </form>
-
-      <h3 class="subtitulo">📚 Mis historias</h3>
-      <div id="misHistorias" class="grid-historias"></div>
-    </main>
-
-    <main id="vistaAjustes" class="vista" style="display:none;">
-      <h2>Ajustes</h2>
-
-      <h3 class="subtitulo">Tema</h3>
-      <div class="fila-ajustes">
-        <button id="btnModoClaro" class="btn-secundario">☀️ Claro</button>
-        <button id="btnModoOscuro" class="btn-secundario">🌙 Oscuro</button>
-        <button id="btnModoSepia" class="btn-secundario">📜 Sepia</button>
-      </div>
-
-      <h3 class="subtitulo">Color de acento</h3>
-      <div id="paletaColores" class="paleta-colores"></div>
-
-      <h3 class="subtitulo">Modo lectura</h3>
-      <div class="opcion-lectura">
-        <label>Tamaño de letra: <span id="lblTamano">18px</span></label>
-        <input type="range" id="sliderTamano" min="14" max="26" step="1">
-      </div>
-      <div class="opcion-lectura">
-        <label>Interlineado: <span id="lblInter">1.7</span></label>
-        <input type="range" id="sliderInter" min="14" max="22" step="1">
-      </div>
-      <div class="opcion-lectura">
-        <label>Ancho de columna: <span id="lblAncho">700px</span></label>
-        <input type="range" id="sliderAncho" min="480" max="900" step="20">
-      </div>
-      <div class="fila-ajustes">
-        <button id="btnFuenteSerif" class="btn-secundario">Serif</button>
-        <button id="btnFuenteSans" class="btn-secundario">Sans</button>
-        <button id="btnResetLectura" class="btn-secundario">Restablecer</button>
-      </div>
-
-      <h3 class="subtitulo">Opciones de lectura</h3>
-      <div class="fila-ajustes">
-        <label class="switch-label">
-          <input type="checkbox" id="toggleScrollInfinito">
-          Scroll infinito entre capítulos
-        </label>
-      </div>
-
-      <h3 class="subtitulo">Avanzado</h3>
-      <div class="fila-ajustes">
-        <button id="btnDiagnostico" class="btn-secundario" style="font-size:.85rem;opacity:.75;">🔧 Diagnóstico</button>
-      </div>
-    </main>
+    <!-- BOTTOM NAV (Móvil) -->
+    <nav class="bottom-nav">
+      <button data-vista="inicio" class="bn-btn activo">
+        <span class="bn-icono">🏠</span>
+        <span class="bn-label">Inicio</span>
+      </button>
+      <button data-vista="catalogo" class="bn-btn">
+        <span class="bn-icono">📚</span>
+        <span class="bn-label">Catálogo</span>
+      </button>
+      <button data-vista="publicar" class="bn-btn bn-btn-destacado">
+        <span class="bn-icono">✍️</span>
+      </button>
+      <button data-vista="biblioteca" class="bn-btn">
+        <span class="bn-icono">💾</span>
+        <span class="bn-label">Biblioteca</span>
+      </button>
+      <button data-vista="perfil" class="bn-btn">
+        <span class="bn-icono">👤</span>
+        <span class="bn-label">Perfil</span>
+      </button>
+    </nav>
 
     <button id="btnSalirPantallaCompleta" class="salir-pantalla-completa" style="display:none;" aria-label="Salir de pantalla completa">✕</button>
 
