@@ -240,6 +240,12 @@ function iniciarCarrusel(historias) {
   carruselHistorias.forEach(h => {
     const slide = document.createElement('div');
     slide.className = 'carrusel-slide';
+
+    const subgeneros = (h.subgenero || []).slice(0, 2).join(' · ');
+    const capTexto = h.capitulos.length > 0
+      ? `${h.capitulos.length} capítulo${h.capitulos.length === 1 ? '' : 's'}`
+      : 'Sin capítulos aún';
+
     slide.innerHTML = `
       <div class="carrusel-slide-portada">
         ${h.portadaUrl ? `<img src="${h.portadaUrl}" alt="">` : '📖'}
@@ -247,7 +253,8 @@ function iniciarCarrusel(historias) {
       <div class="carrusel-slide-info">
         <h3>${escapeHtml(h.titulo)}</h3>
         <p class="autor-mini">por ${escapeHtml(h.autor || 'Anónimo')}</p>
-        <p class="genero-mini">${escapeHtml(h.genero)}${h.subgenero && h.subgenero.length ? ' · ' + h.subgenero.slice(0, 2).join(', ') : ''}</p>
+        <p class="genero-mini">${escapeHtml(h.genero)}${subgeneros ? ' · ' + escapeHtml(subgeneros) : ''}</p>
+        <p class="cap-mini">📖 ${capTexto}</p>
         ${h.sinopsis ? `<p class="sinopsis-mini">${escapeHtml(h.sinopsis)}</p>` : ''}
       </div>
     `;
@@ -277,7 +284,16 @@ function iniciarTimerCarrusel() {
   carruselTimer = setInterval(() => {
     if (carruselPausado) return;
     if (carruselHistorias.length <= 1) return;
-    carruselIdx = (carruselIdx + 1) % carruselHistorias.length;
+
+    const ancho = window.innerWidth;
+    const slidesVisibles = ancho >= 900 ? 3 : 1;
+    const maxIdx = Math.max(0, carruselHistorias.length - slidesVisibles);
+
+    if (carruselIdx >= maxIdx) {
+      carruselIdx = 0;
+    } else {
+      carruselIdx++;
+    }
     actualizarCarrusel();
   }, 5000);
 }
@@ -308,6 +324,13 @@ function actualizarCarrusel() {
   let slidesVisibles = 1;
   if (ancho >= 900) slidesVisibles = 3;
 
+  const total = carruselHistorias.length;
+
+  // Calcular el máximo índice sin dejar vacíos
+  const maxIdx = Math.max(0, total - slidesVisibles);
+  if (carruselIdx > maxIdx) carruselIdx = maxIdx;
+  if (carruselIdx < 0) carruselIdx = 0;
+
   const porcentaje = 100 / slidesVisibles;
   track.style.transform = `translateX(-${carruselIdx * porcentaje}%)`;
 
@@ -322,14 +345,20 @@ window.addEventListener('resize', actualizarCarrusel);
 
 document.getElementById('carruselPrev')?.addEventListener('click', () => {
   if (!carruselHistorias.length) return;
-  carruselIdx = (carruselIdx - 1 + carruselHistorias.length) % carruselHistorias.length;
+  const ancho = window.innerWidth;
+  const slidesVisibles = ancho >= 900 ? 3 : 1;
+  const maxIdx = Math.max(0, carruselHistorias.length - slidesVisibles);
+  carruselIdx = carruselIdx <= 0 ? maxIdx : carruselIdx - 1;
   actualizarCarrusel();
   reiniciarTimerCarrusel();
 });
 
 document.getElementById('carruselNext')?.addEventListener('click', () => {
   if (!carruselHistorias.length) return;
-  carruselIdx = (carruselIdx + 1) % carruselHistorias.length;
+  const ancho = window.innerWidth;
+  const slidesVisibles = ancho >= 900 ? 3 : 1;
+  const maxIdx = Math.max(0, carruselHistorias.length - slidesVisibles);
+  carruselIdx = carruselIdx >= maxIdx ? 0 : carruselIdx + 1;
   actualizarCarrusel();
   reiniciarTimerCarrusel();
 });
@@ -1256,8 +1285,6 @@ function crearTarjeta(h) {
     portadaDiv.innerHTML = '📖';
   }
 
-  const prom = promedioEstrellas(h);
-  const palabras = totalPalabrasHistoria(h);
   const autor = h.autor || 'Anónimo';
   const esMia = esMiHistoria(h);
 
@@ -1270,19 +1297,25 @@ function crearTarjeta(h) {
   }
 
   const subgeneros = (h.subgenero || []).slice(0, 3).map(s => `<span class="etiqueta-sub">${escapeHtml(s)}</span>`).join('');
+  const etiquetas = h.etiquetas.slice(0, 4).map(e => `#${escapeHtml(e)}`).join(' ');
+
+  const capTexto = h.capitulos.length > 0
+    ? `${h.capitulos.length} capítulo${h.capitulos.length === 1 ? '' : 's'}`
+    : 'Sin capítulos aún';
 
   const infoDiv = document.createElement('div');
   infoDiv.className = 'tarjeta-info';
   infoDiv.innerHTML = `
     <h3>${escapeHtml(h.titulo)}</h3>
     <p class="autor-mini">por ${escapeHtml(autor)}${esMia ? ' <span style="color:#43a047;">(tú)</span>' : ''}</p>
-    <p>${escapeHtml(h.genero)}</p>
-    ${subgeneros ? `<div class="subgeneros-chips">${subgeneros}</div>` : ''}
-    <p>${h.capitulos.length} cap. · ${palabras} palabras · ${minutosLectura(palabras)} min</p>
-    ${prom > 0 ? `<p class="estrellitas">${estrellitas(prom)} ${prom}</p>` : ''}
+    <div class="tarjeta-datos">
+      <div class="tarjeta-fila">📚 ${escapeHtml(h.genero)}</div>
+      ${subgeneros ? `<div class="tarjeta-fila tarjeta-fila-chips">${subgeneros}</div>` : ''}
+      ${etiquetas ? `<div class="tarjeta-fila">🏷️ ${etiquetas}</div>` : ''}
+      <div class="tarjeta-fila">📖 ${capTexto}</div>
+      <div class="tarjeta-fila">✍️ ${escapeHtml(h.estado || 'En curso')}</div>
+    </div>
     ${badgeEspecial}
-    <span class="badge-estado">${escapeHtml(h.estado || 'En curso')}</span>
-    ${h.etiquetas.slice(0, 4).map(e => `<span class="etiqueta">#${escapeHtml(e)}</span>`).join('')}
   `;
 
   div.appendChild(portadaDiv);
@@ -1745,8 +1778,18 @@ async function abrirLector(id) {
   document.getElementById('lectorAutor').textContent = `por ${h.autor || 'Anónimo'}`;
 
   const subgenerosTxt = (h.subgenero && h.subgenero.length) ? ' · ' + h.subgenero.join(', ') : '';
-  document.getElementById('lectorMeta').innerHTML =
-    `${escapeHtml(h.genero)}${escapeHtml(subgenerosTxt)} · ${h.estado || 'En curso'} · ${h.capitulos.length} capítulos`;
+  const capTexto = h.capitulos.length > 0
+    ? `${h.capitulos.length} capítulo${h.capitulos.length === 1 ? '' : 's'}`
+    : 'Sin capítulos aún';
+
+  document.getElementById('lectorMeta').innerHTML = `
+    <div class="lector-datos">
+      <div class="lector-fila">📚 ${escapeHtml(h.genero)}${subgenerosTxt ? escapeHtml(subgenerosTxt) : ''}</div>
+      ${h.etiquetas && h.etiquetas.length ? `<div class="lector-fila">🏷️ ${h.etiquetas.map(e => '#' + escapeHtml(e)).join(' ')}</div>` : ''}
+      <div class="lector-fila">📖 ${capTexto}</div>
+      <div class="lector-fila">✍️ ${escapeHtml(h.estado || 'En curso')}</div>
+    </div>
+  `;
 
   const contAdv = document.getElementById('lectorAdvertencias');
   contAdv.innerHTML = '';
@@ -1889,30 +1932,13 @@ document.getElementById('btnSeguirAutor').onclick = () => {
 };
 
 /* =========================================================
-   ESTRELLAS
+   ESTRELLAS (ocultas temporalmente)
 ========================================================= */
 function renderizarEstrellas() {
   const cont = document.getElementById('estrellasValoracion');
-  const prom = promedioEstrellas(historiaActual);
-  cont.innerHTML = '';
-  for (let i = 1; i <= 5; i++) {
-    const btn = document.createElement('button');
-    btn.className = 'estrella' + (i <= Math.round(prom) ? ' activa' : '');
-    btn.textContent = '★';
-    btn.setAttribute('aria-label', `Valorar con ${i} estrella${i === 1 ? '' : 's'}`);
-    btn.onclick = () => {
-      btn.classList.remove('pop');
-      void btn.offsetWidth;
-      btn.classList.add('pop');
-      cont.querySelectorAll('.estrella').forEach((s, idx) => {
-        s.classList.toggle('activa', idx < i);
-      });
-      toast('⭐ Valoración registrada (pendiente de guardar)', 'info', 2000);
-    };
-    cont.appendChild(btn);
-  }
-  document.getElementById('promedioValoracion').textContent =
-    prom > 0 ? `(${prom} / 5 · ${historiaActual.valoraciones.length} votos)` : '(sin valoraciones aún)';
+  if (!cont) return;
+  const bloqueValoracion = cont.closest('.valoracion');
+  if (bloqueValoracion) bloqueValoracion.style.display = 'none';
 }
 
 function renderizarCapitulos() {
