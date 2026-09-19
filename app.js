@@ -242,8 +242,9 @@ function iniciarCarrusel(historias) {
     slide.className = 'carrusel-slide';
 
     const subgeneros = (h.subgenero || []).slice(0, 2).join(' · ');
-    const capTexto = h.capitulos.length > 0
-      ? `${h.capitulos.length} capítulo${h.capitulos.length === 1 ? '' : 's'}`
+    const numCaps = (h.chapterCount !== undefined) ? h.chapterCount : (h.capitulos ? h.capitulos.length : 0);
+    const capTexto = numCaps > 0
+      ? `${numCaps} capítulo${numCaps === 1 ? '' : 's'}`
       : 'Sin capítulos aún';
 
     slide.innerHTML = `
@@ -326,7 +327,6 @@ function actualizarCarrusel() {
 
   const total = carruselHistorias.length;
 
-  // Calcular el máximo índice sin dejar vacíos
   const maxIdx = Math.max(0, total - slidesVisibles);
   if (carruselIdx > maxIdx) carruselIdx = maxIdx;
   if (carruselIdx < 0) carruselIdx = 0;
@@ -450,6 +450,19 @@ async function cargarImagenLocal(id, intentos = 4) {
 ========================================================= */
 function historiaDeSupabase(s) {
   if (!s) return null;
+
+  // Crear un array "virtual" del tamaño de chapter_count
+  // para que h.capitulos.length funcione en las tarjetas
+  const numCaps = Number(s.chapter_count) || 0;
+  const capsVirtuales = new Array(numCaps).fill(null).map((_, i) => ({
+    id: 'virtual-' + i,
+    titulo: '',
+    contenido: '',
+    notaAutor: '',
+    orden: i + 1,
+    virtual: true,
+  }));
+
   return {
     id: s.id,
     supabaseId: s.id,
@@ -469,7 +482,8 @@ function historiaDeSupabase(s) {
     esBorrador: s.is_draft || false,
     fechaPublicacion: s.publish_at || null,
     fecha: s.created_at,
-    capitulos: [],
+    capitulos: capsVirtuales,
+    chapterCount: numCaps,
     valoraciones: [],
     comentarios: {},
   };
@@ -1299,8 +1313,9 @@ function crearTarjeta(h) {
   const subgeneros = (h.subgenero || []).slice(0, 3).map(s => `<span class="etiqueta-sub">${escapeHtml(s)}</span>`).join('');
   const etiquetas = h.etiquetas.slice(0, 4).map(e => `#${escapeHtml(e)}`).join(' ');
 
-  const capTexto = h.capitulos.length > 0
-    ? `${h.capitulos.length} capítulo${h.capitulos.length === 1 ? '' : 's'}`
+  const numCaps = (h.chapterCount !== undefined) ? h.chapterCount : (h.capitulos ? h.capitulos.length : 0);
+  const capTexto = numCaps > 0
+    ? `${numCaps} capítulo${numCaps === 1 ? '' : 's'}`
     : 'Sin capítulos aún';
 
   const infoDiv = document.createElement('div');
@@ -1778,8 +1793,9 @@ async function abrirLector(id) {
   document.getElementById('lectorAutor').textContent = `por ${h.autor || 'Anónimo'}`;
 
   const subgenerosTxt = (h.subgenero && h.subgenero.length) ? ' · ' + h.subgenero.join(', ') : '';
-  const capTexto = h.capitulos.length > 0
-    ? `${h.capitulos.length} capítulo${h.capitulos.length === 1 ? '' : 's'}`
+  const numCaps = (h.chapterCount !== undefined) ? h.chapterCount : (h.capitulos ? h.capitulos.length : 0);
+  const capTexto = numCaps > 0
+    ? `${numCaps} capítulo${numCaps === 1 ? '' : 's'}`
     : 'Sin capítulos aún';
 
   document.getElementById('lectorMeta').innerHTML = `
